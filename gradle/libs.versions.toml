@@ -1,5 +1,7 @@
 [versions]
 agp = "8.12.3"
+carouselview = "0.1.5"
+dotsindicator = "5.1.0"
 kotlin = "2.0.21"
 coreKtx = "1.17.0"
 junit = "4.13.2"
@@ -11,9 +13,13 @@ activity = "1.11.0"
 constraintlayout = "2.2.1"
 navigationFragmentKtx = "2.9.5"
 navigationUiKtx = "2.9.5"
+viewpager2 = "1.1.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-viewpager2 = { module = "androidx.viewpager2:viewpager2", version.ref = "viewpager2" }
+carouselview = { module = "com.synnapps:carouselview", version.ref = "carouselview" }
+dotsindicator = { module = "com.tbuonomo:dotsindicator", version.ref = "dotsindicator" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
