@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="8dp"
+    android:layout_marginTop="8dp"
+    android:layout_marginEnd="8dp"
+    app:cardCornerRadius="4dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="8dp">
+
+        <ImageView
+            android:id="@+id/profile_picture"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:scaleType="centerCrop"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:src="@tools:sample/avatars" />
+
+        <TextView
+            android:id="@+id/user_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/profile_picture"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="User Name" />
+
+        <TextView
+            android:id="@+id/post_text"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="@+id/user_name"
+            app:layout_constraintTop_toBottomOf="@+id/user_name"
+            tools:text="This is a forum post. The user is commenting on the movie." />
+
+        <RatingBar
+            android:id="@+id/post_rating"
+            style="?android:attr/ratingBarStyleSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:numStars="5"
+            android:stepSize="1.0"
+            app:layout_constraintStart_toStartOf="@+id/post_text"
+            app:layout_constraintTop_toBottomOf="@+id/post_text" />
+
+        <Button
+            android:id="@+id/reply_button"
+            style="?android:attr/borderlessButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Reply"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/post_rating" />
+
+        <LinearLayout
+            android:id="@+id/reply_layout"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/reply_button">
+
+            <EditText
+                android:id="@+id/reply_edit_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Write your reply..." />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="end">
+
+                <Button
+                    android:id="@+id/cancel_reply_button"
+                    style="?android:attr/borderlessButtonStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Cancel" />
+
+                <Button
+                    android:id="@+id/submit_reply_button"
+                    style="?android:attr/borderlessButtonStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Submit" />
+            </LinearLayout>
+        </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.cardview.widget.CardView>

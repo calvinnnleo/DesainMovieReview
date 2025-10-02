@@ -5,10 +5,11 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.example.desainmoviereview2.databinding.ItemBannerBinding
 
-class BannerAdapter(private val banners: List<MovieItem>) :
-    RecyclerView.Adapter<BannerAdapter.BannerViewHolder>() {
+class BannerAdapter(
+    private val banners: List<MovieItem>,
+    private val onItemClick: (MovieItem) -> Unit
+) : RecyclerView.Adapter<BannerAdapter.BannerViewHolder>() {
 
-    // Keep the actual size of your banner list
     private val actualBannerCount = banners.size
 
     inner class BannerViewHolder(val binding: ItemBannerBinding) : RecyclerView.ViewHolder(binding.root) {
@@ -16,7 +17,7 @@ class BannerAdapter(private val banners: List<MovieItem>) :
             binding.bannerImage.setImageResource(bannerItem.imageRes)
             binding.bannerTitle.text = bannerItem.title
             binding.bannerDesc.text = bannerItem.desc
-            // Add any other binding logic here
+            itemView.setOnClickListener { onItemClick(bannerItem) }
         }
     }
 
@@ -26,19 +27,13 @@ class BannerAdapter(private val banners: List<MovieItem>) :
     }
 
     override fun onBindViewHolder(holder: BannerViewHolder, position: Int) {
-        if (actualBannerCount == 0) return // Avoid division by zero if banners list is empty
+        if (actualBannerCount == 0) return
 
-        // Use modulo to get the actual item from the list
         val actualPosition = position % actualBannerCount
         holder.bind(banners[actualPosition])
     }
 
     override fun getItemCount(): Int {
-        // Return a very large number to simulate infinity
-        // Only do this if you have items, otherwise ViewPager2 might have issues.
         return if (actualBannerCount > 0) Int.MAX_VALUE else 0
     }
 }
-
-
-

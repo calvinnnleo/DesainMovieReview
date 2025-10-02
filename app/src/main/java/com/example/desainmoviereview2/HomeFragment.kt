@@ -6,11 +6,12 @@ import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.viewpager2.widget.ViewPager2
 import com.example.desainmoviereview2.databinding.FragmentHomeBinding
-import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
 class HomeFragment : Fragment() {
@@ -23,21 +24,20 @@ class HomeFragment : Fragment() {
     private val binding get() = _binding!!
 
     val banners = listOf(
-        MovieItem(R.drawable.bg_banner_sementara1, "Interstellar", "A journey beyond the stars"),
-        MovieItem(R.drawable.bg_banner_sementara2, "Inception", "Dreams within dreams"),
-        MovieItem(R.drawable.bg_banner_sementara3, "Tenet", "Time runs out")
+        MovieItem(R.drawable.bg_banner_sementara1, "Interstellar", "A journey beyond the stars", "2014-11-07"),
+        MovieItem(R.drawable.bg_banner_sementara2, "Inception", "Dreams within dreams", "2010-07-16"),
+        MovieItem(R.drawable.bg_banner_sementara3, "Tenet", "Time runs out", "2020-09-03")
     )
 
     val movies = listOf(
-        MovieItem(R.drawable.bg_banner_sementara1, "Interstellar", "A journey beyond the stars"),
-        MovieItem(R.drawable.bg_banner_sementara2, "Inception", "Dreams within dreams"),
-        MovieItem(R.drawable.bg_banner_sementara3, "Tenet", "Time runs out")
+        MovieItem(R.drawable.bg_banner_sementara1, "Interstellar", "A journey beyond the stars", "2014-11-07"),
+        MovieItem(R.drawable.bg_banner_sementara2, "Inception", "Dreams within dreams", "2010-07-16"),
+        MovieItem(R.drawable.bg_banner_sementara3, "Tenet", "Time runs out", "2020-09-03")
     )
 
     private var autoSlideRunnable: Runnable? = null
-    private val autoSlideDelay = 3000L // Use a constant for clarity
+    private val autoSlideDelay = 3000L
 
-    // Store the callback to be able to unregister it
     private var pageChangeCallback: ViewPager2.OnPageChangeCallback? = null
 
     override fun onCreateView(
@@ -51,119 +51,75 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        if (banners.isEmpty()) {
-            return
+        bannerAdapter = BannerAdapter(banners) { movie ->
+            openForumPage(movie)
         }
-
-        bannerAdapter = BannerAdapter(banners)
         binding.bannerViewPager.adapter = bannerAdapter
 
         val startPosition = (Int.MAX_VALUE / 2) - ((Int.MAX_VALUE / 2) % banners.size)
         binding.bannerViewPager.setCurrentItem(startPosition, false)
 
-        // setupAutoSlide will also call startAutoSlide internally
         setupAutoSlide()
 
         movieListRecyclerView = binding.movieList
 
-        movieAdapter = MovieAdapter(movies)
+        movieAdapter = MovieAdapter(movies) { movie ->
+            openForumPage(movie)
+        }
         movieListRecyclerView.adapter = movieAdapter
 
-        // 4. Atur LayoutManager
-        // Untuk daftar vertikal:
-        // movieListRecyclerView.layoutManager = LinearLayoutManager(requireContext())
-        // Untuk daftar horizontal:
-        // movieListRecyclerView.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
-        // Untuk grid:
-         movieListRecyclerView.layoutManager = GridLayoutManager(requireContext(), 2) // 2 kolom
+        movieListRecyclerView.layoutManager = GridLayoutManager(requireContext(), 2)
 
-        // Opsional: ItemDecoration untuk spasi antar item
-        // val dividerItemDecoration = DividerItemDecoration(requireContext(), (movieListRecyclerView.layoutManager as LinearLayoutManager).orientation)
-        // movieListRecyclerView.addItemDecoration(dividerItemDecoration)
-
-        // Opsional: Optimasi jika ukuran item RecyclerView tidak berubah
         movieListRecyclerView.setHasFixedSize(true)
+    }
+
+    private fun openForumPage(movie: MovieItem) {
+        val bundle = bundleOf("movieItem" to movie)
+        findNavController().navigate(R.id.action_global_forumFragment, bundle)
     }
 
     private fun setupAutoSlide() {
         if (banners.isEmpty()) return
 
-        // Define the runnable once
-        autoSlideRunnable = object : Runnable {
-            override fun run() {
-                // Ensure binding is still valid
-                _binding?.let {
-                    val currentItem = it.bannerViewPager.currentItem
-                    val nextItem = currentItem + 1
-                    it.bannerViewPager.setCurrentItem(nextItem, true)
-                }
+        autoSlideRunnable = Runnable { 
+            _binding?.let {
+                val currentItem = it.bannerViewPager.currentItem
+                val nextItem = currentItem + 1
+                it.bannerViewPager.setCurrentItem(nextItem, true)
             }
         }
 
-        // Define the page change callback
         pageChangeCallback = object : ViewPager2.OnPageChangeCallback() {
             private var isUserInteracting = false
-            private var lastUserInteractionTime = 0L
 
             override fun onPageScrollStateChanged(state: Int) {
                 when (state) {
                     ViewPager2.SCROLL_STATE_DRAGGING -> {
                         isUserInteracting = true
-                        stopAutoSlideLogic() // Stop auto-slide when user starts dragging
+                        stopAutoSlideLogic()
                     }
                     ViewPager2.SCROLL_STATE_IDLE -> {
                         if (isUserInteracting) {
-                            // User finished interacting.
-                            // Schedule the next auto-slide from the current position.
-                            lastUserInteractionTime = System.currentTimeMillis()
-                            startAutoSlideLogic(true) // Restart with delay
+                            startAutoSlideLogic(true)
                             isUserInteracting = false
                         } else {
-                            // Auto-scroll finished. Schedule the next one from the current position.
-                            // Only schedule if not recently triggered by user interaction ending.
-                            // This check helps prevent double triggers if SCROLL_STATE_IDLE
-                            // fires quickly after a user interaction caused an IDLE state.
-                            if (System.currentTimeMillis() - lastUserInteractionTime > 100) { // Small buffer
-                                startAutoSlideLogic(false) // Continue auto-slide
-                            }
+                            startAutoSlideLogic(false)
                         }
-                    }
-                    ViewPager2.SCROLL_STATE_SETTLING -> {
-                        // Page is settling into its final position.
-                        // If it was an auto-scroll, the next auto-scroll will be
-                        // scheduled when it becomes IDLE.
-                        // If it was user scroll, isUserInteracting is true.
                     }
                 }
             }
-
-            override fun onPageSelected(position: Int) {
-                // This is called when a new page is selected,
-                // either programmatically or by user interaction.
-                // If it was NOT a user interaction recently,
-                // and auto-slide is active, ensure the next slide is scheduled.
-                // This can help if onPageScrollStateChanged(IDLE) is missed.
-                // However, be careful not to create conflicting schedules.
-                // For now, primary logic is in onPageScrollStateChanged.
-            }
         }
 
-        // Register the callback
         pageChangeCallback?.let { binding.bannerViewPager.registerOnPageChangeCallback(it) }
 
-        // Start the initial auto-slide
-        startAutoSlideLogic(true) // Start with initial delay
+        startAutoSlideLogic(true) 
     }
 
     private fun startAutoSlideLogic(initialDelay: Boolean) {
-        // Ensure runnable is defined and binding is available
         autoSlideRunnable?.let { runnable ->
-            _binding?.let {
-                // Always remove previous callbacks for this runnable to prevent duplicates
-                handler.removeCallbacks(runnable)
-                val delay = if (initialDelay) autoSlideDelay else autoSlideDelay
-                handler.postDelayed(runnable, delay)
-            }
+            handler.removeCallbacks(runnable)
+            val delay = if (initialDelay) autoSlideDelay else autoSlideDelay
+            handler.postDelayed(runnable, delay)
         }
     }
 
@@ -178,10 +134,8 @@ class HomeFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        // If banners are present and view is created, resume auto-slide
         if (banners.isNotEmpty() && _binding != null) {
-            // Restart from the current item, respecting user's last position
-            startAutoSlideLogic(true) // Use initial delay when resuming
+            startAutoSlideLogic(true)
         }
     }
 
@@ -191,7 +145,5 @@ class HomeFragment : Fragment() {
         pageChangeCallback?.let { binding.bannerViewPager.unregisterOnPageChangeCallback(it) }
         pageChangeCallback = null
         _binding = null
-        // More thorough cleanup of handler if necessary, but removing specific runnable is usually enough
-        // handler.removeCallbacksAndMessages(null)
     }
 }

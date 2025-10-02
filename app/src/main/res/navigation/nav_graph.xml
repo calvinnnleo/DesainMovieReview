@@ -4,18 +4,27 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
     app:startDestination="@id/homeFragment">
+
     <fragment
         android:id="@+id/homeFragment"
         android:name="com.example.desainmoviereview2.HomeFragment"
         android:label="HomeFragment"
         tools:layout="@layout/fragment_home"/>
-    <activity
-        android:id="@+id/mainActivity"
-        android:name="com.example.desainmoviereview2.MainActivity"
-        android:label="MainActivity" />
+
     <fragment
         android:id="@+id/movieListFragment"
         android:name="com.example.desainmoviereview2.MovieListFragment"
         android:label="fragment_movie_list"
         tools:layout="@layout/fragment_movie_list" />
+
+    <fragment
+        android:id="@+id/forumFragment"
+        android:name="com.example.desainmoviereview2.ForumFragment"
+        android:label="ForumFragment"
+        tools:layout="@layout/fragment_forum" />
+
+    <action
+        android:id="@+id/action_global_forumFragment"
+        app:destination="@id/forumFragment" />
+
 </navigation>
