@@ -18,6 +18,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:layout_marginEnd="16dp"
+            style="@style/Widget.Material3.AutoCompleteTextView.OutlinedBox"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
@@ -26,8 +27,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:endIconDrawable="@drawable/ic_search"
-                app:endIconTint="@color/black"
+                app:endIconTint="?attr/colorControlNormal"
                 app:endIconMode="custom"
+                app:shapeAppearanceOverlay="@style/MyCustomShapeOverlay"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent">
 
@@ -35,8 +37,10 @@
                     android:id="@+id/search_bar"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/bg_search_bar"
-                    android:hint="@string/search_bar_hint" />
+                    android:hint="@string/search_bar_hint"
+                    android:inputType="text"
+                    android:maxLines="1"
+                    android:imeOptions="actionSearch"/>
             </com.google.android.material.textfield.TextInputLayout>
         </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -72,8 +76,8 @@
             android:id="@+id/textView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="TextView"
+            android:layout_marginTop="24dp"
+            android:text="@string/recommendation"
             app:layout_constraintTop_toBottomOf="@+id/constraintLayout5" />
 
         <androidx.recyclerview.widget.RecyclerView

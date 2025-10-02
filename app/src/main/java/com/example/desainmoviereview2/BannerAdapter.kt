@@ -5,14 +5,14 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.example.desainmoviereview2.databinding.ItemBannerBinding
 
-class BannerAdapter(private val banners: List<BannerItem>) :
+class BannerAdapter(private val banners: List<MovieItem>) :
     RecyclerView.Adapter<BannerAdapter.BannerViewHolder>() {
 
     // Keep the actual size of your banner list
     private val actualBannerCount = banners.size
 
     inner class BannerViewHolder(val binding: ItemBannerBinding) : RecyclerView.ViewHolder(binding.root) {
-        fun bind(bannerItem: BannerItem) {
+        fun bind(bannerItem: MovieItem) {
             binding.bannerImage.setImageResource(bannerItem.imageRes)
             binding.bannerTitle.text = bannerItem.title
             binding.bannerDesc.text = bannerItem.desc

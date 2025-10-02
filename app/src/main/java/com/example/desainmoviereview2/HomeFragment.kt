@@ -19,9 +19,9 @@ class HomeFragment : Fragment() {
     private lateinit var adapter: BannerAdapter
 
     val banners = listOf(
-        BannerItem(R.drawable.bg_banner_sementara1, "Interstellar", "A journey beyond the stars"),
-        BannerItem(R.drawable.bg_banner_sementara2, "Inception", "Dreams within dreams"),
-        BannerItem(R.drawable.bg_banner_sementara3, "Tenet", "Time runs out")
+        MovieItem(R.drawable.bg_banner_sementara1, "Interstellar", "A journey beyond the stars"),
+        MovieItem(R.drawable.bg_banner_sementara2, "Inception", "Dreams within dreams"),
+        MovieItem(R.drawable.bg_banner_sementara3, "Tenet", "Time runs out")
     )
 
     private var autoSlideRunnable: Runnable? = null
