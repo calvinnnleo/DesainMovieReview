@@ -13,4 +13,9 @@
         android:id="@+id/mainActivity"
         android:name="com.example.desainmoviereview2.MainActivity"
         android:label="MainActivity" />
+    <fragment
+        android:id="@+id/movieListFragment"
+        android:name="com.example.desainmoviereview2.MovieListFragment"
+        android:label="fragment_movie_list"
+        tools:layout="@layout/fragment_movie_list" />
 </navigation>

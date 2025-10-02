@@ -7,18 +7,28 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.viewpager2.widget.ViewPager2
 import com.example.desainmoviereview2.databinding.FragmentHomeBinding
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 
 class HomeFragment : Fragment() {
+    private val handler = Handler(Looper.getMainLooper())
+    private lateinit var bannerAdapter: BannerAdapter
+    private lateinit var movieAdapter: MovieAdapter
+    private lateinit var movieListRecyclerView: RecyclerView
 
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
 
-    private val handler = Handler(Looper.getMainLooper())
-    private lateinit var adapter: BannerAdapter
-
     val banners = listOf(
+        MovieItem(R.drawable.bg_banner_sementara1, "Interstellar", "A journey beyond the stars"),
+        MovieItem(R.drawable.bg_banner_sementara2, "Inception", "Dreams within dreams"),
+        MovieItem(R.drawable.bg_banner_sementara3, "Tenet", "Time runs out")
+    )
+
+    val movies = listOf(
         MovieItem(R.drawable.bg_banner_sementara1, "Interstellar", "A journey beyond the stars"),
         MovieItem(R.drawable.bg_banner_sementara2, "Inception", "Dreams within dreams"),
         MovieItem(R.drawable.bg_banner_sementara3, "Tenet", "Time runs out")
@@ -45,14 +55,34 @@ class HomeFragment : Fragment() {
             return
         }
 
-        adapter = BannerAdapter(banners)
-        binding.bannerViewPager.adapter = adapter
+        bannerAdapter = BannerAdapter(banners)
+        binding.bannerViewPager.adapter = bannerAdapter
 
         val startPosition = (Int.MAX_VALUE / 2) - ((Int.MAX_VALUE / 2) % banners.size)
         binding.bannerViewPager.setCurrentItem(startPosition, false)
 
         // setupAutoSlide will also call startAutoSlide internally
         setupAutoSlide()
+
+        movieListRecyclerView = binding.movieList
+
+        movieAdapter = MovieAdapter(movies)
+        movieListRecyclerView.adapter = movieAdapter
+
+        // 4. Atur LayoutManager
+        // Untuk daftar vertikal:
+        // movieListRecyclerView.layoutManager = LinearLayoutManager(requireContext())
+        // Untuk daftar horizontal:
+        // movieListRecyclerView.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+        // Untuk grid:
+         movieListRecyclerView.layoutManager = GridLayoutManager(requireContext(), 2) // 2 kolom
+
+        // Opsional: ItemDecoration untuk spasi antar item
+        // val dividerItemDecoration = DividerItemDecoration(requireContext(), (movieListRecyclerView.layoutManager as LinearLayoutManager).orientation)
+        // movieListRecyclerView.addItemDecoration(dividerItemDecoration)
+
+        // Opsional: Optimasi jika ukuran item RecyclerView tidak berubah
+        movieListRecyclerView.setHasFixedSize(true)
     }
 
     private fun setupAutoSlide() {

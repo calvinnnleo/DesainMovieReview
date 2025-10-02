@@ -17,12 +17,5 @@ class MainActivity : AppCompatActivity() {
 
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_nav)
         bottomNav.setupWithNavController(navController)
-        setContentView(R.layout.activity_main) // 👈 INI HARUS activity_main, BUKAN main
-
-        if (savedInstanceState == null) {
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.fragment_container, MovieListFragment())
-                .commit()
-        }
     }
 }
