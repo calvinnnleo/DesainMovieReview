@@ -14,11 +14,9 @@
         <!-- Search Bar -->
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/constraintLayout2"
+            style="@style/Widget.Material3.AutoCompleteTextView.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginEnd="16dp"
-            style="@style/Widget.Material3.AutoCompleteTextView.OutlinedBox"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
@@ -27,20 +25,21 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:endIconDrawable="@drawable/ic_search"
-                app:endIconTint="?attr/colorControlNormal"
                 app:endIconMode="custom"
-                app:shapeAppearanceOverlay="@style/MyCustomShapeOverlay"
+                app:endIconTint="?attr/colorControlNormal"
+                app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent">
+                app:layout_constraintTop_toTopOf="parent"
+                app:shapeAppearanceOverlay="@style/MyCustomShapeOverlay">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/search_bar"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="@string/search_bar_hint"
+                    android:imeOptions="actionSearch"
                     android:inputType="text"
-                    android:maxLines="1"
-                    android:imeOptions="actionSearch"/>
+                    android:maxLines="1" />
             </com.google.android.material.textfield.TextInputLayout>
         </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -76,18 +75,21 @@
             android:id="@+id/textView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
             android:layout_marginTop="24dp"
             android:text="@string/recommendation"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/constraintLayout5" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/movie_list"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
             android:layout_marginTop="8dp"
             android:overScrollMode="never"
-            app:layout_constraintTop_toBottomOf="@+id/textView"
-            tools:layout_editor_absoluteX="-50dp" />
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textView" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.core.widget.NestedScrollView>
