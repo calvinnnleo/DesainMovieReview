@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.viewpager2.widget.ViewPager2
 import com.example.desainmoviereview2.databinding.FragmentHomeBinding
 import androidx.recyclerview.widget.RecyclerView
+import androidx.appcompat.widget.SearchView
 
 class HomeFragment : Fragment() {
     private val handler = Handler(Looper.getMainLooper())
@@ -30,6 +31,12 @@ class HomeFragment : Fragment() {
     )
 
     val movies = listOf(
+        MovieItem(R.drawable.bg_banner_sementara1, "Interstellar", "A journey beyond the stars", "2014-11-07"),
+        MovieItem(R.drawable.bg_banner_sementara2, "Inception", "Dreams within dreams", "2010-07-16"),
+        MovieItem(R.drawable.bg_banner_sementara3, "Tenet", "Time runs out", "2020-09-03"),
+        MovieItem(R.drawable.bg_banner_sementara1, "Interstellar", "A journey beyond the stars", "2014-11-07"),
+        MovieItem(R.drawable.bg_banner_sementara2, "Inception", "Dreams within dreams", "2010-07-16"),
+        MovieItem(R.drawable.bg_banner_sementara3, "Tenet", "Time runs out", "2020-09-03"),
         MovieItem(R.drawable.bg_banner_sementara1, "Interstellar", "A journey beyond the stars", "2014-11-07"),
         MovieItem(R.drawable.bg_banner_sementara2, "Inception", "Dreams within dreams", "2010-07-16"),
         MovieItem(R.drawable.bg_banner_sementara3, "Tenet", "Time runs out", "2020-09-03")
