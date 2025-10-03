@@ -12,6 +12,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.DesainMovieReview2">
         <activity
+            android:name=".AuthActivity"
+            android:exported="false" />
+        <activity
             android:name=".MainActivity"
             android:exported="true"
             android:windowSoftInputMode="adjustPan"> <!--biar bottom nav gak naik-naik-->

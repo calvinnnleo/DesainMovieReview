@@ -6,9 +6,10 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 
 class MovieAdapter(
-    private var movies: List<MovieItem>,
+    private val movies: List<MovieItem>,
     private val listener: (MovieItem) -> Unit
 ) : RecyclerView.Adapter<MovieAdapter.MovieViewHolder>() {
 
@@ -19,8 +20,14 @@ class MovieAdapter(
 
         fun bind(movie: MovieItem, listener: (MovieItem) -> Unit) {
             titleTextView.text = movie.title
-            descTextView.text = "Tanggal Rilis: ${movie.releaseDate}"
-            posterImageView.setImageResource(movie.imageRes)
+            descTextView.text = "Directed by: ${movie.director} (${movie.releaseYear})"
+            
+            Glide.with(itemView.context)
+                .load(movie.posterUrl)
+                .placeholder(R.drawable.ic_movie_list) // Optional: a placeholder image
+                .error(R.drawable.ic_movie_list) // Optional: an error image
+                .into(posterImageView)
+
             itemView.setOnClickListener { listener(movie) }
         }
     }
@@ -36,9 +43,4 @@ class MovieAdapter(
     }
 
     override fun getItemCount(): Int = movies.size
-
-    fun updateMovies(newMovies: List<MovieItem>) {
-        movies = newMovies
-        notifyDataSetChanged()
-    }
 }

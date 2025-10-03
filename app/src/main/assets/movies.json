@@ -1,0 +1,43 @@
+
+[
+  {
+    "id": "movie_id_interstellar",
+    "title": "Interstellar",
+    "director": "Christopher Nolan",
+    "releaseYear": 2014,
+    "genre": ["Sci-Fi", "Adventure"],
+    "posterUrl": "https://www.themoviedb.org/t/p/w600_and_h900_bestv2/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg"
+  },
+  {
+    "id": "movie_id_inception",
+    "title": "Inception",
+    "director": "Christopher Nolan",
+    "releaseYear": 2010,
+    "genre": ["Sci-Fi", "Action"],
+    "posterUrl": "https://www.themoviedb.org/t/p/w600_and_h900_bestv2/oYuLEt3zVCKq57qu2F8dT7NIa6f.jpg"
+  },
+  {
+    "id": "movie_id_tenet",
+    "title": "Tenet",
+    "director": "Christopher Nolan",
+    "releaseYear": 2020,
+    "genre": ["Sci-Fi", "Action"],
+    "posterUrl": "https://www.themoviedb.org/t/p/w600_and_h900_bestv2/k68nPLbIST6NP96JmTxmZ7ksVu.jpg"
+  },
+  {
+    "id": "movie_id_grand_adventure",
+    "title": "The Grand Adventure",
+    "director": "Jane Doe",
+    "releaseYear": 2022,
+    "genre": ["Action", "Sci-Fi"],
+    "posterUrl": "https://example.com/grandadventure.jpg"
+  },
+  {
+    "id": "movie_id_mystery_house",
+    "title": "Mystery of the Old House",
+    "director": "John Smith",
+    "releaseYear": 2021,
+    "genre": ["Thriller", "Drama"],
+    "posterUrl": "https://example.com/mysteryhouse.jpg"
+  }
+]

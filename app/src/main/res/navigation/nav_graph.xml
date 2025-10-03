@@ -23,6 +23,12 @@
         android:label="ForumFragment"
         tools:layout="@layout/fragment_forum" />
 
+    <fragment
+        android:id="@+id/profileFragment"
+        android:name="com.example.desainmoviereview2.ProfileFragment"
+        android:label="ProfileFragment"
+        tools:layout="@layout/fragment_profile" />
+
     <action
         android:id="@+id/action_global_forumFragment"
         app:destination="@id/forumFragment" />

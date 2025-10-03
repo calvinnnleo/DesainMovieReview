@@ -13,6 +13,9 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.viewpager2.widget.ViewPager2
 import com.example.desainmoviereview2.databinding.FragmentHomeBinding
 import androidx.recyclerview.widget.RecyclerView
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import java.io.IOException
 
 class HomeFragment : Fragment() {
     private val handler = Handler(Looper.getMainLooper())
@@ -23,23 +26,8 @@ class HomeFragment : Fragment() {
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
 
-    val banners = listOf(
-        MovieItem(R.drawable.bg_banner_sementara1, "Interstellar", "A journey beyond the stars", "2014-11-07"),
-        MovieItem(R.drawable.bg_banner_sementara2, "Inception", "Dreams within dreams", "2010-07-16"),
-        MovieItem(R.drawable.bg_banner_sementara3, "Tenet", "Time runs out", "2020-09-03")
-    )
-
-    val movies = listOf(
-        MovieItem(R.drawable.bg_banner_sementara1, "Interstellar", "A journey beyond the stars", "2014-11-07"),
-        MovieItem(R.drawable.bg_banner_sementara2, "Inception", "Dreams within dreams", "2010-07-16"),
-        MovieItem(R.drawable.bg_banner_sementara3, "Tenet", "Time runs out", "2020-09-03"),
-        MovieItem(R.drawable.bg_banner_sementara3, "Tenet", "Time runs out", "2020-09-03"),
-        MovieItem(R.drawable.bg_banner_sementara3, "Tenet", "Time runs out", "2020-09-03"),
-        MovieItem(R.drawable.bg_banner_sementara3, "Tenet", "Time runs out", "2020-09-03"),
-        MovieItem(R.drawable.bg_banner_sementara3, "Tenet", "Time runs out", "2020-09-03"),
-        MovieItem(R.drawable.bg_banner_sementara3, "Tenet", "Time runs out", "2020-09-03"),
-
-    )
+    private val banners = mutableListOf<MovieItem>()
+    private val movies = mutableListOf<MovieItem>()
 
     private var autoSlideRunnable: Runnable? = null
     private val autoSlideDelay = 3000L
@@ -57,26 +45,50 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        setupRecyclerViews()
+        loadMoviesFromJson()
+        setupAutoSlide()
+    }
+
+    private fun setupRecyclerViews() {
+        // Banner Adapter
         bannerAdapter = BannerAdapter(banners) { movie ->
             openForumPage(movie)
         }
         binding.bannerViewPager.adapter = bannerAdapter
 
-        val startPosition = (Int.MAX_VALUE / 2) - ((Int.MAX_VALUE / 2) % banners.size)
-        binding.bannerViewPager.setCurrentItem(startPosition, false)
-
-        setupAutoSlide()
-
+        // Movie List Adapter
         movieListRecyclerView = binding.movieList
-
         movieAdapter = MovieAdapter(movies) { movie ->
             openForumPage(movie)
         }
         movieListRecyclerView.adapter = movieAdapter
-
         movieListRecyclerView.layoutManager = GridLayoutManager(requireContext(), 2)
-
         movieListRecyclerView.setHasFixedSize(true)
+    }
+
+    private fun loadMoviesFromJson() {
+        try {
+            val jsonString = context?.assets?.open("movies.json")?.bufferedReader().use { it?.readText() }
+            if (jsonString != null) {
+                val movieList = Json.decodeFromString<List<MovieItem>>(jsonString)
+                movies.clear()
+                movies.addAll(movieList)
+                banners.clear()
+                banners.addAll(movieList.take(3))
+
+                movieAdapter.notifyDataSetChanged()
+                bannerAdapter.notifyDataSetChanged()
+
+                if (banners.isNotEmpty()) {
+                    val startPosition = (Int.MAX_VALUE / 2) - ((Int.MAX_VALUE / 2) % banners.size)
+                    binding.bannerViewPager.setCurrentItem(startPosition, false)
+                    startAutoSlideLogic(true)
+                }
+            }
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
     }
 
     private fun openForumPage(movie: MovieItem) {
