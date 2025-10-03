@@ -6,8 +6,4 @@
     </style>
 
     <style name="Theme.DesainMovieReview2" parent="Base.Theme.DesainMovieReview2" />
-    <style name="MyCustomShapeOverlay">
-        <item name="cornerFamily">rounded</item>
-        <item name="cornerSize">50dp</item> <!-- Sesuaikan radius sudut Anda -->
-    </style>
 </resources>
