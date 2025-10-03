@@ -34,10 +34,6 @@ class ForumFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding.backButton.setOnClickListener {
-            findNavController().navigateUp()
-        }
-
         val movieItem = arguments?.getParcelable<MovieItem>("movieItem")
 
         movieItem?.let {
