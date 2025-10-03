@@ -17,6 +17,9 @@ class ForumFragment : Fragment() {
     private val posts = mutableListOf(
         ForumPost("User1", "This is the first comment.", 4.5f, R.drawable.ic_profile),
         ForumPost("User2", "I really liked this movie!", 5f, R.drawable.ic_profile),
+        ForumPost("User3", "I think the book was better.", 3f, R.drawable.ic_profile),
+        ForumPost("User3", "I think the book was better.", 3f, R.drawable.ic_profile),
+        ForumPost("User3", "I think the book was better.", 3f, R.drawable.ic_profile),
         ForumPost("User3", "I think the book was better.", 3f, R.drawable.ic_profile)
     )
     private lateinit var forumAdapter: ForumAdapter
