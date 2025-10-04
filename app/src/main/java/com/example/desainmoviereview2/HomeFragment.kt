@@ -13,9 +13,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.viewpager2.widget.ViewPager2
 import com.example.desainmoviereview2.databinding.FragmentHomeBinding
 import androidx.recyclerview.widget.RecyclerView
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.json.Json
-import java.io.IOException
+import com.google.firebase.database.*
 
 class HomeFragment : Fragment() {
     private val handler = Handler(Looper.getMainLooper())
@@ -25,6 +23,8 @@ class HomeFragment : Fragment() {
 
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
+
+    private lateinit var database: DatabaseReference
 
     private val banners = mutableListOf<MovieItem>()
     private val movies = mutableListOf<MovieItem>()
@@ -45,8 +45,10 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        database = FirebaseDatabase.getInstance("https://movie-recommendation-b7ce0-default-rtdb.asia-southeast1.firebasedatabase.app").reference
+
         setupRecyclerViews()
-        loadMoviesFromJson()
+        fetchMovies()
         setupAutoSlide()
     }
 
@@ -67,28 +69,38 @@ class HomeFragment : Fragment() {
         movieListRecyclerView.setHasFixedSize(true)
     }
 
-    private fun loadMoviesFromJson() {
-        try {
-            val jsonString = context?.assets?.open("movies.json")?.bufferedReader().use { it?.readText() }
-            if (jsonString != null) {
-                val movieList = Json.decodeFromString<List<MovieItem>>(jsonString)
+    private fun fetchMovies() {
+        val moviesRef = database.child("movies")
+        moviesRef.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
                 movies.clear()
-                movies.addAll(movieList)
                 banners.clear()
-                banners.addAll(movieList.take(3))
-
+                for (movieSnapshot in snapshot.children) {
+                    val movie = movieSnapshot.getValue(MovieItem::class.java)
+                    if (movie != null) {
+                        movie.id = movieSnapshot.key
+                        movies.add(movie)
+                        // Add the first 3 movies to the banner
+                        if (banners.size < 3) {
+                            banners.add(movie)
+                        }
+                    }
+                }
                 movieAdapter.notifyDataSetChanged()
                 bannerAdapter.notifyDataSetChanged()
 
+                // Restart auto-slide if needed
                 if (banners.isNotEmpty()) {
                     val startPosition = (Int.MAX_VALUE / 2) - ((Int.MAX_VALUE / 2) % banners.size)
                     binding.bannerViewPager.setCurrentItem(startPosition, false)
                     startAutoSlideLogic(true)
                 }
             }
-        } catch (e: IOException) {
-            e.printStackTrace()
-        }
+
+            override fun onCancelled(error: DatabaseError) {
+                // Handle error
+            }
+        })
     }
 
     private fun openForumPage(movie: MovieItem) {

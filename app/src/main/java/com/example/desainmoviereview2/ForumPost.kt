@@ -1,8 +1,10 @@
 package com.example.desainmoviereview2
 
 import com.google.firebase.database.Exclude
+import com.google.firebase.database.IgnoreExtraProperties
 import kotlinx.serialization.Serializable
 
+@IgnoreExtraProperties
 @Serializable
 data class ForumPost(
     @get:Exclude
@@ -20,6 +22,7 @@ data class ForumPost(
     constructor() : this(null, null, null, null, null, null, null, null, null)
 }
 
+@IgnoreExtraProperties
 @Serializable
 data class RatingsSummary(
     val averageRating: Double? = null,

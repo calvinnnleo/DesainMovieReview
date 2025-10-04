@@ -10,6 +10,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import com.bumptech.glide.Glide
 import com.example.desainmoviereview2.databinding.FragmentProfileBinding
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DatabaseReference
@@ -37,7 +38,8 @@ class ProfileFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         auth = FirebaseAuth.getInstance()
-        database = FirebaseDatabase.getInstance().getReference("users")
+        // Point the database reference to the "users" node in the correct database instance
+        database = FirebaseDatabase.getInstance("https://movie-recommendation-b7ce0-default-rtdb.asia-southeast1.firebasedatabase.app").getReference("users")
 
         loadUserProfile()
 
@@ -45,7 +47,7 @@ class ProfileFragment : Fragment() {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: Editable?) {
-                binding.buttonSaveProfile.isEnabled = s.toString() != originalUsername
+                binding.buttonSaveProfile.isEnabled = s.toString() != originalUsername && binding.progressBar.visibility == View.GONE
             }
         })
 
@@ -62,23 +64,37 @@ class ProfileFragment : Fragment() {
     }
 
     private fun loadUserProfile() {
-        val user = auth.currentUser
-        if (user == null) {
+        val firebaseUser = auth.currentUser
+        if (firebaseUser == null) {
             Log.e("ProfileFragment", "User is not logged in.")
-            // Optionally, navigate to the login screen
             return
         }
 
-        val userId = user.uid
-        binding.textViewEmail.text = user.email
+        val userId = firebaseUser.uid
+        binding.textViewEmail.text = firebaseUser.email
 
-        database.child(userId).get().addOnSuccessListener {
-            if (it.exists()) {
-                originalUsername = it.child("username").getValue(String::class.java)
-                binding.editTextUsername.setText(originalUsername)
+        database.child(userId).get().addOnSuccessListener { dataSnapshot ->
+            if (dataSnapshot.exists()) {
+                // Deserialize the entire User object
+                val userProfile = dataSnapshot.getValue(User::class.java)
+                
+                userProfile?.let {
+                    originalUsername = it.username
+                    binding.editTextUsername.setText(originalUsername)
+                    
+                    // Load profile picture using Glide
+                    it.profilePictureUrl?.let { url ->
+                        if (url.isNotEmpty()) {
+                            Glide.with(this@ProfileFragment)
+                                .load(url)
+                                .placeholder(R.drawable.ic_profile) // Optional placeholder
+                                .into(binding.imageViewProfilePic)
+                        }
+                    }
+                }
                 binding.buttonSaveProfile.isEnabled = false // Disable button initially
             } else {
-                Log.d("ProfileFragment", "No profile data found in Realtime DB")
+                Log.d("ProfileFragment", "No profile data found in Realtime DB for user $userId")
             }
         }.addOnFailureListener{
             Log.e("ProfileFragment", "Error getting data", it)
@@ -93,26 +109,30 @@ class ProfileFragment : Fragment() {
         }
 
         val username = binding.editTextUsername.text.toString().trim()
-
         if (username.isEmpty()) {
             binding.textFieldUsername.error = "Username cannot be empty"
             return
         }
 
-        // Clear any previous errors
         binding.textFieldUsername.error = null
 
+        binding.progressBar.visibility = View.VISIBLE
+        binding.buttonSaveProfile.isEnabled = false
+
+        // Create a map to update the specific field
         val userUpdates = mapOf<String, Any>(
             "username" to username
         )
 
         database.child(userId).updateChildren(userUpdates)
             .addOnSuccessListener {
+                binding.progressBar.visibility = View.GONE
                 Toast.makeText(requireContext(), "Profile updated successfully", Toast.LENGTH_SHORT).show()
-                originalUsername = username // Update the original username
-                binding.buttonSaveProfile.isEnabled = false // Disable after saving
+                originalUsername = username
             }
             .addOnFailureListener { e ->
+                binding.progressBar.visibility = View.GONE
+                binding.buttonSaveProfile.isEnabled = true
                 Toast.makeText(requireContext(), "Error updating profile: ${e.message}", Toast.LENGTH_SHORT).show()
                 Log.w("ProfileFragment", "Error updating document", e)
             }
