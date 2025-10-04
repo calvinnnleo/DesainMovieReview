@@ -57,7 +57,8 @@ class MovieListFragment : Fragment() {
                 for (snapshot in dataSnapshot.children) {
                     val movie = snapshot.getValue(MovieItem::class.java)
                     if (movie != null) {
-                        movie.id = snapshot.key // Store the movie ID
+                        // **FIX:** Manually set the movie_id from the snapshot's key
+                        movie.movie_id = snapshot.key
                         movieList.add(movie)
                     }
                 }

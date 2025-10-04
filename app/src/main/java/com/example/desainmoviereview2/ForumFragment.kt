@@ -13,6 +13,7 @@ import com.bumptech.glide.Glide
 import com.example.desainmoviereview2.databinding.FragmentForumBinding
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
+import com.google.firebase.database.ServerValue
 
 class ForumFragment : Fragment() {
 
@@ -22,16 +23,18 @@ class ForumFragment : Fragment() {
     private lateinit var auth: FirebaseAuth
     private lateinit var forumPostsRef: DatabaseReference
     private lateinit var usersRef: DatabaseReference
-    private lateinit var commentsRef: DatabaseReference
+    private lateinit var authStateListener: FirebaseAuth.AuthStateListener
 
     private var movieItem: MovieItem? = null
     private val posts = mutableListOf<ForumPost>()
     private lateinit var forumAdapter: ForumPostAdapter
 
-    private lateinit var valueEventListener: ValueEventListener
+    private var valueEventListener: ValueEventListener? = null
+    private var query: Query? = null
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
     ): View {
         _binding = FragmentForumBinding.inflate(inflater, container, false)
         return binding.root
@@ -40,14 +43,23 @@ class ForumFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        movieItem = arguments?.getParcelable("movieItem")
+
+        if (movieItem == null || movieItem?.movie_id.isNullOrBlank()) {
+            Toast.makeText(context, "Error: Movie data is missing.", Toast.LENGTH_LONG).show()
+            findNavController().navigateUp()
+            return
+        }
+
         auth = FirebaseAuth.getInstance()
         val db = FirebaseDatabase.getInstance("https://movie-recommendation-b7ce0-default-rtdb.asia-southeast1.firebasedatabase.app")
         forumPostsRef = db.getReference("forum_posts")
         usersRef = db.getReference("users")
-        commentsRef = db.getReference("post_comments")
 
-        movieItem = arguments?.getParcelable("movieItem")
+        binding.addReviewFab.visibility = View.GONE
+        binding.addReviewLayout.visibility = View.GONE
 
+        setupAuthStateListener()
         setupUI()
         setupRecyclerView()
         setupClickListeners()
@@ -55,11 +67,26 @@ class ForumFragment : Fragment() {
         fetchForumPosts()
     }
 
+    private fun setupAuthStateListener() {
+        authStateListener = FirebaseAuth.AuthStateListener { firebaseAuth ->
+            val user = firebaseAuth.currentUser
+            if (user != null) {
+                Log.d("AuthState", "Listener: User is signed in with UID: ${user.uid}")
+                binding.addReviewFab.visibility = View.VISIBLE
+            } else {
+                Log.d("AuthState", "Listener: User is signed out.")
+                binding.addReviewFab.visibility = View.GONE
+                binding.addReviewLayout.visibility = View.GONE
+            }
+        }
+    }
+
     private fun setupUI() {
         movieItem?.let {
             binding.movieTitle.text = it.title
-            binding.movieDescription.text = "Directed by: ${it.director} (${it.releaseYear})"
-            Glide.with(this).load(it.posterUrl).into(binding.moviePoster)
+            binding.movieDescription.text = it.overview
+            binding.movieRatingBar.rating = it.rating?.toFloat() ?: 0f
+            Glide.with(this).load(it.primary_image_url).into(binding.moviePoster)
         }
     }
 
@@ -87,124 +114,133 @@ class ForumFragment : Fragment() {
     }
 
     private fun fetchForumPosts() {
-        val currentMovieId = movieItem?.id ?: return
+        val currentMovieId = movieItem?.movie_id ?: return
+        query = forumPostsRef.orderByChild("movie_id").equalTo(currentMovieId)
 
         valueEventListener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 posts.clear()
-                var totalRating = 0.0
-                var ratingCount = 0
-                for (postSnapshot in snapshot.children) {
-                    val post = postSnapshot.getValue(ForumPost::class.java)
-                    if (post != null) {
-                        post.id = postSnapshot.key
-                        posts.add(post)
-                        post.ratingsSummary?.averageRating?.let {
-                            totalRating += it
-                            ratingCount++
+                if (snapshot.exists()) {
+                    for (postSnapshot in snapshot.children) {
+                        val post = postSnapshot.getValue(ForumPost::class.java)
+                        if (post != null) {
+                            posts.add(post)
                         }
                     }
                 }
-                posts.sortByDescending { it.timestamp } // Show newest posts first
+                posts.sortByDescending { it.created_at as? Long ?: 0 }
                 forumAdapter.notifyDataSetChanged()
-
-                if (ratingCount > 0) {
-                    binding.movieRatingBar.rating = (totalRating / ratingCount).toFloat()
-                }
             }
 
             override fun onCancelled(error: DatabaseError) {
                 Log.w("ForumFragment", "loadPosts:onCancelled", error.toException())
             }
         }
-
-        forumPostsRef.orderByChild("movieId").equalTo(currentMovieId).addValueEventListener(valueEventListener)
+        query?.addValueEventListener(valueEventListener!!)
     }
 
     private fun submitNewPost() {
         val user = auth.currentUser
-        val movie = movieItem
-
-        if (user == null || movie == null) {
+        if (user == null) {
             Toast.makeText(requireContext(), "You must be logged in to post.", Toast.LENGTH_SHORT).show()
             return
         }
 
+        val currentMovieId = movieItem?.movie_id
         val content = binding.newPostEditText.text.toString().trim()
+
         if (content.isEmpty()) {
-            binding.newPostEditText.error = "Post cannot be empty."
+            Toast.makeText(context, "Content cannot be empty", Toast.LENGTH_SHORT).show()
             return
         }
 
-        // First, get the current user's username from the database
-        usersRef.child(user.uid).child("username").get().addOnSuccessListener {
-            val username = it.getValue(String::class.java) ?: "Anonymous"
-            val postId = forumPostsRef.push().key ?: return@addOnSuccessListener
+        usersRef.child(user.uid).child("username").get().addOnSuccessListener { usernameSnapshot ->
+            val username = usernameSnapshot.getValue(String::class.java) ?: "Anonymous"
 
-            val newPost = ForumPost(
-                id = postId,
-                movieId = movie.id,
-                title = "Post about ${movie.title}", // You can create a more sophisticated title later
-                content = content,
-                authorUid = user.uid,
-                authorUsername = username,
-                timestamp = System.currentTimeMillis(),
-                ratingsSummary = RatingsSummary(binding.ratingBar.rating.toDouble(), 1)
+            val newPostRef = forumPostsRef.push()
+            val postId = newPostRef.key
+
+            val postMap = mapOf(
+                "post_id" to postId,
+                "movie_id" to currentMovieId,
+                "content" to content,
+                "author_uid" to user.uid,
+                "author_username" to username,
+                "user_rating" to binding.ratingBar.rating.toInt(),
+                "created_at" to ServerValue.TIMESTAMP
             )
 
-            // Now, save the new post to the database
-            forumPostsRef.child(postId).setValue(newPost).addOnCompleteListener {
-                if (it.isSuccessful) {
-                    Toast.makeText(requireContext(), "Post submitted!", Toast.LENGTH_SHORT).show()
-                    // Reset UI
-                    binding.newPostEditText.text.clear()
-                    binding.ratingBar.rating = 0f
-                    binding.addReviewLayout.visibility = View.GONE
-                    binding.addReviewFab.visibility = View.VISIBLE
-                } else {
-                    Toast.makeText(requireContext(), "Failed to submit post: ${it.exception?.message}", Toast.LENGTH_SHORT).show()
-                }
+            newPostRef.setValue(postMap).addOnSuccessListener {
+                Toast.makeText(requireContext(), "Post submitted!", Toast.LENGTH_SHORT).show()
+                binding.newPostEditText.text.clear()
+                binding.ratingBar.rating = 0f
+                binding.addReviewLayout.visibility = View.GONE
+                binding.addReviewFab.visibility = View.VISIBLE
+            }.addOnFailureListener { e ->
+                Toast.makeText(requireContext(), "Failed to submit post: ${e.message}", Toast.LENGTH_SHORT).show()
             }
-        }.addOnFailureListener{
-            Toast.makeText(requireContext(), "Could not verify user data to post.", Toast.LENGTH_SHORT).show()
+
+        }.addOnFailureListener { e ->
+            Toast.makeText(requireContext(), "Could not get user data: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
 
     fun submitReplyToPost(post: ForumPost, replyContent: String) {
         val user = auth.currentUser
-        if (user == null) {
+        val parentPostId = post.post_id
+
+        if (user == null || parentPostId == null) {
             Toast.makeText(requireContext(), "You must be logged in to reply.", Toast.LENGTH_SHORT).show()
             return
         }
 
-        usersRef.child(user.uid).child("username").get().addOnSuccessListener {
-            val username = it.getValue(String::class.java) ?: "Anonymous"
-            val commentId = commentsRef.child(post.id!!).push().key ?: return@addOnSuccessListener
+        if (replyContent.isEmpty()) {
+            Toast.makeText(requireContext(), "Reply cannot be empty.", Toast.LENGTH_SHORT).show()
+            return
+        }
 
-            val newComment = PostComment(
-                id = commentId,
-                authorUid = user.uid,
-                authorUsername = username,
-                content = replyContent,
-                timestamp = System.currentTimeMillis()
+        usersRef.child(user.uid).child("username").get().addOnSuccessListener { usernameSnapshot ->
+            val username = usernameSnapshot.getValue(String::class.java) ?: "Anonymous"
+
+            val repliesRef = forumPostsRef.child(parentPostId).child("replies")
+
+            val newReplyRef = repliesRef.push()
+            val replyId = newReplyRef.key
+
+            val replyMap = mapOf(
+                "post_id" to replyId,
+                "author_uid" to user.uid,
+                "author_username" to username,
+                "content" to replyContent,
+                "created_at" to ServerValue.TIMESTAMP
             )
 
-            commentsRef.child(post.id!!).child(commentId).setValue(newComment).addOnCompleteListener {
-                if (it.isSuccessful) {
+            newReplyRef.setValue(replyMap)
+                .addOnSuccessListener {
                     Toast.makeText(requireContext(), "Reply submitted!", Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(requireContext(), "Failed to submit reply: ${it.exception?.message}", Toast.LENGTH_SHORT).show()
                 }
-            }
-        }.addOnFailureListener {
-            Toast.makeText(requireContext(), "Could not verify user data to post.", Toast.LENGTH_SHORT).show()
+                .addOnFailureListener { e ->
+                    Toast.makeText(requireContext(), "Failed to submit reply: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+        }.addOnFailureListener { e ->
+            Toast.makeText(requireContext(), "Could not get user data: ${e.message}", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        auth.addAuthStateListener(authStateListener)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        auth.removeAuthStateListener(authStateListener)
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-        if (this::valueEventListener.isInitialized) {
-            forumPostsRef.removeEventListener(valueEventListener)
+        valueEventListener?.let { listener ->
+            query?.removeEventListener(listener)
         }
         _binding = null
     }

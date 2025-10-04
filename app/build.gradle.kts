@@ -2,7 +2,6 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     id("kotlin-parcelize")
-    id("org.jetbrains.kotlin.plugin.serialization")
     alias(libs.plugins.google.services)
     id("kotlin-kapt")
 }
@@ -65,7 +64,6 @@ dependencies {
     implementation(libs.glide)
     kapt("com.github.bumptech.glide:compiler:4.16.0")
 
-    implementation(libs.kotlinx.serialization.json)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

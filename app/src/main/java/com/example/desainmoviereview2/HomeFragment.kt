@@ -3,6 +3,7 @@ package com.example.desainmoviereview2
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -53,13 +54,11 @@ class HomeFragment : Fragment() {
     }
 
     private fun setupRecyclerViews() {
-        // Banner Adapter
         bannerAdapter = BannerAdapter(banners) { movie ->
             openForumPage(movie)
         }
         binding.bannerViewPager.adapter = bannerAdapter
 
-        // Movie List Adapter
         movieListRecyclerView = binding.movieList
         movieAdapter = MovieAdapter(movies) { movie ->
             openForumPage(movie)
@@ -78,9 +77,9 @@ class HomeFragment : Fragment() {
                 for (movieSnapshot in snapshot.children) {
                     val movie = movieSnapshot.getValue(MovieItem::class.java)
                     if (movie != null) {
-                        movie.id = movieSnapshot.key
+                        // **FIX:** Manually set the movie_id from the snapshot's key
+                        movie.movie_id = movieSnapshot.key
                         movies.add(movie)
-                        // Add the first 3 movies to the banner
                         if (banners.size < 3) {
                             banners.add(movie)
                         }
@@ -89,7 +88,6 @@ class HomeFragment : Fragment() {
                 movieAdapter.notifyDataSetChanged()
                 bannerAdapter.notifyDataSetChanged()
 
-                // Restart auto-slide if needed
                 if (banners.isNotEmpty()) {
                     val startPosition = (Int.MAX_VALUE / 2) - ((Int.MAX_VALUE / 2) % banners.size)
                     binding.bannerViewPager.setCurrentItem(startPosition, false)
@@ -98,7 +96,7 @@ class HomeFragment : Fragment() {
             }
 
             override fun onCancelled(error: DatabaseError) {
-                // Handle error
+                Log.e("HomeFragment", "Failed to read movie data.", error.toException())
             }
         })
     }

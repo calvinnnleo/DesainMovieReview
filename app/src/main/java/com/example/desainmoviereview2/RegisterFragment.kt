@@ -1,7 +1,6 @@
 package com.example.desainmoviereview2
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,13 +11,12 @@ import com.example.desainmoviereview2.databinding.FragmentRegisterBinding
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
-import java.text.SimpleDateFormat
-import java.util.*
 
 class RegisterFragment : Fragment() {
 
     private var _binding: FragmentRegisterBinding? = null
     private val binding get() = _binding!!
+
     private lateinit var auth: FirebaseAuth
     private lateinit var database: DatabaseReference
 
@@ -34,60 +32,56 @@ class RegisterFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         auth = FirebaseAuth.getInstance()
-        database = FirebaseDatabase.getInstance().getReference("users")
+        database = FirebaseDatabase.getInstance("https://movie-recommendation-b7ce0-default-rtdb.asia-southeast1.firebasedatabase.app").reference
 
         binding.buttonRegister.setOnClickListener {
-            val email = binding.editTextEmail.text.toString()
-            val password = binding.editTextPassword.text.toString()
-
-            if (email.isNotBlank() && password.isNotBlank()) {
-                auth.createUserWithEmailAndPassword(email, password)
-                    .addOnCompleteListener(requireActivity()) { task ->
-                        if (task.isSuccessful) {
-                            val firebaseUser = auth.currentUser
-                            val uid = firebaseUser?.uid
-
-                            if (uid != null) {
-                                // Create a date formatter for ISO 8601 format
-                                val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
-                                sdf.timeZone = TimeZone.getTimeZone("UTC")
-                                val joinedDate = sdf.format(Date())
-
-                                val user = hashMapOf<String, Any>(
-                                    "email" to email,
-                                    "joinedDate" to joinedDate
-                                )
-
-                                database.child(uid).setValue(user)
-                                    .addOnSuccessListener {
-                                        Log.d("RealtimeDB", "User profile created for $uid")
-                                        Toast.makeText(requireContext(), "Registration successful!", Toast.LENGTH_LONG).show()
-                                        findNavController().navigate(R.id.action_registerFragment_to_loginFragment)
-                                    }
-                                    .addOnFailureListener { e ->
-                                        Log.w("RealtimeDB", "Error adding document", e)
-                                        Toast.makeText(requireContext(), "Registration successful (DB error)!", Toast.LENGTH_LONG).show()
-                                        findNavController().navigate(R.id.action_registerFragment_to_loginFragment)
-                                    }
-                            } else {
-                                Toast.makeText(requireContext(), "Registration successful but failed to get user ID.", Toast.LENGTH_LONG).show()
-                                findNavController().navigate(R.id.action_registerFragment_to_loginFragment)
-                            }
-
-                        } else {
-                            Toast.makeText(
-                                requireContext(),
-                                "Authentication failed: ${task.exception?.message}",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                    }
-            }
+            registerUser()
         }
 
         binding.buttonGoToLogin.setOnClickListener {
             findNavController().navigate(R.id.action_registerFragment_to_loginFragment)
         }
+    }
+
+    private fun registerUser() {
+        val email = binding.editTextEmail.text.toString().trim()
+        val password = binding.editTextPassword.text.toString().trim()
+        val username = binding.editTextUsername.text.toString().trim() // Changed from editTextNickname
+
+        if (email.isEmpty() || password.isEmpty() || username.isEmpty()) {
+            Toast.makeText(context, "Please fill all fields", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        auth.createUserWithEmailAndPassword(email, password)
+            .addOnCompleteListener(requireActivity()) { task ->
+                if (task.isSuccessful) {
+                    val uid = task.result.user?.uid
+
+                    if (uid != null) {
+                        val user = User(
+                            uid = uid,
+                            username = username, // Changed from nickname
+                            email = email,
+                            joinedDate = System.currentTimeMillis()
+                        )
+
+                        database.child("users").child(uid).setValue(user)
+                            .addOnSuccessListener {
+                                Toast.makeText(context, "Registration successful!", Toast.LENGTH_SHORT).show()
+                                // Navigate to home after successful registration
+                                findNavController().navigate(R.id.action_registerFragment_to_homeFragment) 
+                            }
+                            .addOnFailureListener { e ->
+                                Toast.makeText(context, "Database error: ${e.message}", Toast.LENGTH_LONG).show()
+                            }
+                    } else {
+                        Toast.makeText(context, "Registration failed: Could not get user ID.", Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    Toast.makeText(context, "Registration failed: ${task.exception?.message}", Toast.LENGTH_LONG).show()
+                }
+            }
     }
 
     override fun onDestroyView() {

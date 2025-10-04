@@ -3,14 +3,10 @@ package com.example.desainmoviereview2
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.desainmoviereview2.databinding.ItemCommentBinding
 import com.example.desainmoviereview2.databinding.ItemForumPostBinding
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
 
 class ForumPostAdapter(
     private val posts: List<ForumPost>,
@@ -32,15 +28,12 @@ class ForumPostAdapter(
         private val binding: ItemForumPostBinding,
         private val onReplySubmit: (post: ForumPost, replyContent: String) -> Unit
     ) : RecyclerView.ViewHolder(binding.root) {
-        private val comments = mutableListOf<PostComment>()
-        private val commentAdapter = CommentAdapter(comments)
 
         fun bind(post: ForumPost) {
-            binding.textViewAuthor.text = post.authorUsername ?: "Anonymous"
+            binding.textViewAuthor.text = post.author_username ?: "Anonymous"
             binding.textViewPostContent.text = post.content
 
-            val averageRating = post.ratingsSummary?.averageRating?.toFloat() ?: 0f
-            binding.postRating.rating = averageRating
+            binding.postRating.rating = post.user_rating?.toFloat() ?: 0f
 
             binding.replyButton.setOnClickListener {
                 val isReplyLayoutVisible = binding.replyLayout.visibility == View.VISIBLE
@@ -60,36 +53,21 @@ class ForumPostAdapter(
                 }
             }
 
-            // Setup comments RecyclerView
             binding.commentsRecyclerView.layoutManager = LinearLayoutManager(binding.root.context)
-            binding.commentsRecyclerView.adapter = commentAdapter
+            val repliesList = post.replies.values.toList()
 
-            // Fetch comments for the post
-            val commentsRef = FirebaseDatabase.getInstance("https://movie-recommendation-b7ce0-default-rtdb.asia-southeast1.firebasedatabase.app").getReference("post_comments").child(post.id!!)
-            commentsRef.addValueEventListener(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    comments.clear()
-                    for (commentSnapshot in snapshot.children) {
-                        val comment = commentSnapshot.getValue(PostComment::class.java)
-                        if (comment != null) {
-                            comments.add(comment)
-                        }
-                    }
-                    commentAdapter.notifyDataSetChanged()
-                }
+            val sortedReplies = repliesList.sortedBy { it.created_at }
 
-                override fun onCancelled(error: DatabaseError) {
-                }
-            })
+            binding.commentsRecyclerView.adapter = CommentAdapter(sortedReplies)
         }
     }
 }
 
-class CommentAdapter(private val comments: List<PostComment>) : RecyclerView.Adapter<CommentAdapter.CommentViewHolder>() {
+class CommentAdapter(private val comments: List<Reply>) : RecyclerView.Adapter<CommentAdapter.CommentViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CommentViewHolder {
-        val binding = ItemCommentBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-        return CommentViewHolder(binding)
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_comment, parent, false)
+        return CommentViewHolder(view)
     }
 
     override fun onBindViewHolder(holder: CommentViewHolder, position: Int) {
@@ -98,10 +76,13 @@ class CommentAdapter(private val comments: List<PostComment>) : RecyclerView.Ada
 
     override fun getItemCount(): Int = comments.size
 
-    class CommentViewHolder(private val binding: ItemCommentBinding) : RecyclerView.ViewHolder(binding.root) {
-        fun bind(comment: PostComment) {
-            binding.textViewAuthor.text = comment.authorUsername ?: "Anonymous"
-            binding.textViewComment.text = comment.content
+    class CommentViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val textViewAuthor: TextView = itemView.findViewById(R.id.textViewAuthor)
+        private val textViewComment: TextView = itemView.findViewById(R.id.textViewComment)
+
+        fun bind(comment: Reply) {
+            textViewAuthor.text = comment.author_username ?: "Anonymous"
+            textViewComment.text = comment.content
         }
     }
 }

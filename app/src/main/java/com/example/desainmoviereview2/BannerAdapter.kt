@@ -17,13 +17,13 @@ class BannerAdapter(
         fun bind(bannerItem: MovieItem) {
             // Use Glide to load the image from the URL
             Glide.with(itemView.context)
-                .load(bannerItem.posterUrl)
+                .load(bannerItem.primary_image_url)
                 .placeholder(R.drawable.ic_movie_list) // Optional placeholder
                 .into(binding.bannerImage)
 
             binding.bannerTitle.text = bannerItem.title
             // Use the new fields for the description
-            binding.bannerDesc.text = "Directed by: ${bannerItem.director}"
+            binding.bannerDesc.text = "Directed by: ${bannerItem.directors}"
             itemView.setOnClickListener { onItemClick(bannerItem) }
         }
     }
