@@ -13,22 +13,17 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.viewpager2.widget.ViewPager2
 import com.example.desainmoviereview2.databinding.FragmentHomeBinding
-import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.database.*
 
 class HomeFragment : Fragment() {
     private val handler = Handler(Looper.getMainLooper())
-    private lateinit var bannerAdapter: BannerAdapter
-    private lateinit var movieAdapter: MovieAdapter
-    private lateinit var movieListRecyclerView: RecyclerView
+    private lateinit var homeBannerAdapter: HomeBannerAdapter
+    private lateinit var homeListAdapter: HomeListAdapter
 
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
 
     private lateinit var database: DatabaseReference
-
-    private val banners = mutableListOf<MovieItem>()
-    private val movies = mutableListOf<MovieItem>()
 
     private var autoSlideRunnable: Runnable? = null
     private val autoSlideDelay = 3000L
@@ -50,48 +45,53 @@ class HomeFragment : Fragment() {
 
         setupRecyclerViews()
         fetchMovies()
-        setupAutoSlide()
     }
 
     private fun setupRecyclerViews() {
-        bannerAdapter = BannerAdapter(banners) { movie ->
+        // Initializes the adapter for the ViewPager2 (banner).
+        homeBannerAdapter = HomeBannerAdapter { movie ->
             openForumPage(movie)
         }
-        binding.bannerViewPager.adapter = bannerAdapter
+        binding.bannerViewPager.adapter = homeBannerAdapter
 
-        movieListRecyclerView = binding.movieList
-        movieAdapter = MovieAdapter(movies) { movie ->
+        // Initializes the RecyclerView for the home movie list.
+        homeListAdapter = HomeListAdapter { movie ->
             openForumPage(movie)
         }
-        movieListRecyclerView.adapter = movieAdapter
-        movieListRecyclerView.layoutManager = GridLayoutManager(requireContext(), 2)
-        movieListRecyclerView.setHasFixedSize(true)
+        binding.movieList.adapter = homeListAdapter
+
+        // Sets the layout manager to a 2-column grid. This is a good choice for displaying movie posters.
+        binding.movieList.layoutManager = GridLayoutManager(requireContext(), 2)
+
+        // SetHasFixedSize(true) tells the RecyclerView that the item size won't change
+        binding.movieList.setHasFixedSize(true)
     }
 
     private fun fetchMovies() {
         val moviesRef = database.child("movies")
         moviesRef.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                movies.clear()
-                banners.clear()
+                val newMovies = mutableListOf<MovieItem>()
+                val newBanners = mutableListOf<MovieItem>()
+
                 for (movieSnapshot in snapshot.children) {
                     val movie = movieSnapshot.getValue(MovieItem::class.java)
                     if (movie != null) {
-                        // **FIX:** Manually set the movie_id from the snapshot's key
                         movie.movie_id = movieSnapshot.key
-                        movies.add(movie)
-                        if (banners.size < 3) {
-                            banners.add(movie)
+                        newMovies.add(movie)
+                        if (newBanners.size < 3) {
+                            newBanners.add(movie)
                         }
                     }
                 }
-                movieAdapter.notifyDataSetChanged()
-                bannerAdapter.notifyDataSetChanged()
+                homeListAdapter.submitList(newMovies)
+                homeBannerAdapter.submitList(newBanners)
 
-                if (banners.isNotEmpty()) {
-                    val startPosition = (Int.MAX_VALUE / 2) - ((Int.MAX_VALUE / 2) % banners.size)
+                if (newBanners.isNotEmpty()) {
+                    setupAutoSlide()
+
+                    val startPosition = (Int.MAX_VALUE / 2) - ((Int.MAX_VALUE / 2) % newBanners.size)
                     binding.bannerViewPager.setCurrentItem(startPosition, false)
-                    startAutoSlideLogic(true)
                 }
             }
 
@@ -107,7 +107,11 @@ class HomeFragment : Fragment() {
     }
 
     private fun setupAutoSlide() {
-        if (banners.isEmpty()) return
+        if (homeBannerAdapter.itemCount == 0) return
+
+        if (autoSlideRunnable != null) {
+            stopAutoSlideLogic()
+        }
 
         autoSlideRunnable = Runnable { 
             _binding?.let {
@@ -117,6 +121,7 @@ class HomeFragment : Fragment() {
             }
         }
 
+        pageChangeCallback?.let { binding.bannerViewPager.unregisterOnPageChangeCallback(it) }
         pageChangeCallback = object : ViewPager2.OnPageChangeCallback() {
             private var isUserInteracting = false
 
@@ -128,10 +133,10 @@ class HomeFragment : Fragment() {
                     }
                     ViewPager2.SCROLL_STATE_IDLE -> {
                         if (isUserInteracting) {
-                            startAutoSlideLogic(true)
+                            startAutoSlideLogic() // Argument removed
                             isUserInteracting = false
                         } else {
-                            startAutoSlideLogic(false)
+                            startAutoSlideLogic() // Argument removed
                         }
                     }
                 }
@@ -140,14 +145,13 @@ class HomeFragment : Fragment() {
 
         pageChangeCallback?.let { binding.bannerViewPager.registerOnPageChangeCallback(it) }
 
-        startAutoSlideLogic(true) 
+        startAutoSlideLogic()
     }
 
-    private fun startAutoSlideLogic(initialDelay: Boolean) {
+    private fun startAutoSlideLogic() { // Parameter removed
         autoSlideRunnable?.let { runnable ->
             handler.removeCallbacks(runnable)
-            val delay = if (initialDelay) autoSlideDelay else autoSlideDelay
-            handler.postDelayed(runnable, delay)
+            handler.postDelayed(runnable, autoSlideDelay)
         }
     }
 
@@ -162,8 +166,9 @@ class HomeFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        if (banners.isNotEmpty() && _binding != null) {
-            startAutoSlideLogic(true)
+        // CORRECTED: Check the adapter's item count directly.
+        if (homeBannerAdapter.itemCount > 0 && _binding != null) {
+            startAutoSlideLogic()
         }
     }
 

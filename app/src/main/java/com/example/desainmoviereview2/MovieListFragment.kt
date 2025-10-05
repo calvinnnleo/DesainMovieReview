@@ -18,7 +18,7 @@ class MovieListFragment : Fragment() {
     private val binding get() = _binding!!
 
     private lateinit var database: DatabaseReference
-    private lateinit var movieAdapter: MovieAdapter
+    private lateinit var movieListAdapter: MovieListAdapter
     private val movieList = mutableListOf<MovieItem>()
     private var movieListener: ValueEventListener? = null
 
@@ -40,12 +40,12 @@ class MovieListFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        movieAdapter = MovieAdapter(movieList) { movie ->
+        movieListAdapter = MovieListAdapter(movieList) { movie ->
             val bundle = bundleOf("movieItem" to movie)
             findNavController().navigate(R.id.action_global_forumFragment, bundle)
         }
         binding.recyclerView.layoutManager = LinearLayoutManager(context)
-        binding.recyclerView.adapter = movieAdapter
+        binding.recyclerView.adapter = movieListAdapter
     }
 
     private fun fetchMoviesFromDatabase() {
@@ -62,7 +62,7 @@ class MovieListFragment : Fragment() {
                         movieList.add(movie)
                     }
                 }
-                movieAdapter.notifyDataSetChanged()
+                movieListAdapter.notifyDataSetChanged()
             }
 
             override fun onCancelled(databaseError: DatabaseError) {
