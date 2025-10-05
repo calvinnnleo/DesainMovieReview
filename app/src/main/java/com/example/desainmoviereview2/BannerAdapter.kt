@@ -3,6 +3,7 @@ package com.example.desainmoviereview2
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.example.desainmoviereview2.databinding.ItemBannerBinding
 
 class BannerAdapter(
@@ -14,9 +15,15 @@ class BannerAdapter(
 
     inner class BannerViewHolder(val binding: ItemBannerBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(bannerItem: MovieItem) {
-            binding.bannerImage.setImageResource(bannerItem.imageRes)
+            // Use Glide to load the image from the URL
+            Glide.with(itemView.context)
+                .load(bannerItem.primary_image_url)
+                .placeholder(R.drawable.ic_movie_list) // Optional placeholder
+                .into(binding.bannerImage)
+
             binding.bannerTitle.text = bannerItem.title
-            binding.bannerDesc.text = bannerItem.desc
+            // Use the new fields for the description
+            binding.bannerDesc.text = "Directed by: ${bannerItem.directors}"
             itemView.setOnClickListener { onItemClick(bannerItem) }
         }
     }

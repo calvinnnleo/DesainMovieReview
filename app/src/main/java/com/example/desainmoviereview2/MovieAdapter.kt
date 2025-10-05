@@ -5,10 +5,12 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 
 class MovieAdapter(
-    private var movies: List<MovieItem>,
+    private val movies: List<MovieItem>,
     private val listener: (MovieItem) -> Unit
 ) : RecyclerView.Adapter<MovieAdapter.MovieViewHolder>() {
 
@@ -19,9 +21,22 @@ class MovieAdapter(
 
         fun bind(movie: MovieItem, listener: (MovieItem) -> Unit) {
             titleTextView.text = movie.title
-            descTextView.text = "Tanggal Rilis: ${movie.releaseDate}"
-            posterImageView.setImageResource(movie.imageRes)
-            itemView.setOnClickListener { listener(movie) }
+            descTextView.text = "Directed by: ${movie.directors} (${movie.year})"
+            
+            Glide.with(itemView.context)
+                .load(movie.primary_image_url)
+                .placeholder(R.drawable.ic_movie_list) 
+                .error(R.drawable.ic_movie_list) 
+                .into(posterImageView)
+
+            itemView.setOnClickListener {
+                // **FIX:** Add a guard clause to prevent navigation if movie_id is null.
+                if (movie.movie_id.isNullOrBlank()) {
+                    Toast.makeText(itemView.context, "Error: Cannot open forum for this movie.", Toast.LENGTH_SHORT).show()
+                } else {
+                    listener(movie)
+                }
+            }
         }
     }
 
@@ -36,9 +51,4 @@ class MovieAdapter(
     }
 
     override fun getItemCount(): Int = movies.size
-
-    fun updateMovies(newMovies: List<MovieItem>) {
-        movies = newMovies
-        notifyDataSetChanged()
-    }
 }

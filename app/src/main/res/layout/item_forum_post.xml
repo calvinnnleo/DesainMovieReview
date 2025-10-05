@@ -24,7 +24,7 @@
             tools:src="@tools:sample/avatars" />
 
         <TextView
-            android:id="@+id/user_name"
+            android:id="@+id/textViewAuthor" 
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
@@ -35,13 +35,13 @@
             tools:text="User Name" />
 
         <TextView
-            android:id="@+id/post_text"
+            android:id="@+id/textViewPostContent"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="@+id/user_name"
-            app:layout_constraintTop_toBottomOf="@+id/user_name"
+            app:layout_constraintStart_toStartOf="@+id/textViewAuthor"
+            app:layout_constraintTop_toBottomOf="@+id/textViewAuthor"
             tools:text="This is a forum post. The user is commenting on the movie." />
 
         <RatingBar
@@ -52,8 +52,8 @@
             android:layout_marginTop="8dp"
             android:numStars="5"
             android:stepSize="1.0"
-            app:layout_constraintStart_toStartOf="@+id/post_text"
-            app:layout_constraintTop_toBottomOf="@+id/post_text" />
+            app:layout_constraintStart_toStartOf="@+id/textViewPostContent"
+            app:layout_constraintTop_toBottomOf="@+id/textViewPostContent" />
 
         <Button
             android:id="@+id/reply_button"
@@ -101,6 +101,15 @@
                     android:text="Submit" />
             </LinearLayout>
         </LinearLayout>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/comments_recycler_view"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="@+id/textViewPostContent"
+            app:layout_constraintTop_toBottomOf="@+id/reply_layout" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

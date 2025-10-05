@@ -3,6 +3,7 @@ package com.example.desainmoviereview2
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -13,6 +14,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.viewpager2.widget.ViewPager2
 import com.example.desainmoviereview2.databinding.FragmentHomeBinding
 import androidx.recyclerview.widget.RecyclerView
+import com.google.firebase.database.*
 
 class HomeFragment : Fragment() {
     private val handler = Handler(Looper.getMainLooper())
@@ -23,23 +25,10 @@ class HomeFragment : Fragment() {
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
 
-    val banners = listOf(
-        MovieItem(R.drawable.bg_banner_sementara1, "Interstellar", "A journey beyond the stars", "2014-11-07"),
-        MovieItem(R.drawable.bg_banner_sementara2, "Inception", "Dreams within dreams", "2010-07-16"),
-        MovieItem(R.drawable.bg_banner_sementara3, "Tenet", "Time runs out", "2020-09-03")
-    )
+    private lateinit var database: DatabaseReference
 
-    val movies = listOf(
-        MovieItem(R.drawable.bg_banner_sementara1, "Interstellar", "A journey beyond the stars", "2014-11-07"),
-        MovieItem(R.drawable.bg_banner_sementara2, "Inception", "Dreams within dreams", "2010-07-16"),
-        MovieItem(R.drawable.bg_banner_sementara3, "Tenet", "Time runs out", "2020-09-03"),
-        MovieItem(R.drawable.bg_banner_sementara3, "Tenet", "Time runs out", "2020-09-03"),
-        MovieItem(R.drawable.bg_banner_sementara3, "Tenet", "Time runs out", "2020-09-03"),
-        MovieItem(R.drawable.bg_banner_sementara3, "Tenet", "Time runs out", "2020-09-03"),
-        MovieItem(R.drawable.bg_banner_sementara3, "Tenet", "Time runs out", "2020-09-03"),
-        MovieItem(R.drawable.bg_banner_sementara3, "Tenet", "Time runs out", "2020-09-03"),
-
-    )
+    private val banners = mutableListOf<MovieItem>()
+    private val movies = mutableListOf<MovieItem>()
 
     private var autoSlideRunnable: Runnable? = null
     private val autoSlideDelay = 3000L
@@ -57,26 +46,59 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        database = FirebaseDatabase.getInstance("https://movie-recommendation-b7ce0-default-rtdb.asia-southeast1.firebasedatabase.app").reference
+
+        setupRecyclerViews()
+        fetchMovies()
+        setupAutoSlide()
+    }
+
+    private fun setupRecyclerViews() {
         bannerAdapter = BannerAdapter(banners) { movie ->
             openForumPage(movie)
         }
         binding.bannerViewPager.adapter = bannerAdapter
 
-        val startPosition = (Int.MAX_VALUE / 2) - ((Int.MAX_VALUE / 2) % banners.size)
-        binding.bannerViewPager.setCurrentItem(startPosition, false)
-
-        setupAutoSlide()
-
         movieListRecyclerView = binding.movieList
-
         movieAdapter = MovieAdapter(movies) { movie ->
             openForumPage(movie)
         }
         movieListRecyclerView.adapter = movieAdapter
-
         movieListRecyclerView.layoutManager = GridLayoutManager(requireContext(), 2)
-
         movieListRecyclerView.setHasFixedSize(true)
+    }
+
+    private fun fetchMovies() {
+        val moviesRef = database.child("movies")
+        moviesRef.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                movies.clear()
+                banners.clear()
+                for (movieSnapshot in snapshot.children) {
+                    val movie = movieSnapshot.getValue(MovieItem::class.java)
+                    if (movie != null) {
+                        // **FIX:** Manually set the movie_id from the snapshot's key
+                        movie.movie_id = movieSnapshot.key
+                        movies.add(movie)
+                        if (banners.size < 3) {
+                            banners.add(movie)
+                        }
+                    }
+                }
+                movieAdapter.notifyDataSetChanged()
+                bannerAdapter.notifyDataSetChanged()
+
+                if (banners.isNotEmpty()) {
+                    val startPosition = (Int.MAX_VALUE / 2) - ((Int.MAX_VALUE / 2) % banners.size)
+                    binding.bannerViewPager.setCurrentItem(startPosition, false)
+                    startAutoSlideLogic(true)
+                }
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Log.e("HomeFragment", "Failed to read movie data.", error.toException())
+            }
+        })
     }
 
     private fun openForumPage(movie: MovieItem) {

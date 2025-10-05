@@ -2,6 +2,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     id("kotlin-parcelize")
+    alias(libs.plugins.google.services)
+    id("kotlin-kapt")
 }
 
 android {
@@ -50,6 +52,18 @@ dependencies {
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
     implementation(libs.androidx.viewpager2)
+
+    // Import the Firebase Bill of Materials (BOM)
+    implementation(platform(libs.firebase.bom))
+
+    // Add Firebase dependencies
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.database)
+
+    // Glide for image loading
+    implementation(libs.glide)
+    kapt("com.github.bumptech.glide:compiler:4.16.0")
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
