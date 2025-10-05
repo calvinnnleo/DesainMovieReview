@@ -1,5 +1,6 @@
 [versions]
 agp = "8.13.0"
+glideTransformations = "4.3.0"
 kotlin = "2.2.20"
 coreKtx = "1.17.0"
 activity = "1.11.0"
@@ -29,6 +30,7 @@ glide = { group = "com.github.bumptech.glide", name = "glide", version.ref = "gl
 
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
+glide-transformations = { module = "jp.wasabeef:glide-transformations", version.ref = "glideTransformations" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 
 # Unchanged libraries

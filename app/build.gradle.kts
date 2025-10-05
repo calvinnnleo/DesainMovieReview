@@ -62,7 +62,7 @@ dependencies {
 
     // Glide for image loading
     implementation(libs.glide)
-    kapt("com.github.bumptech.glide:compiler:4.16.0")
+    implementation(libs.glide.transformations)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

@@ -6,7 +6,9 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.bumptech.glide.request.RequestOptions
 import com.example.desainmoviereview2.databinding.ItemBannerBinding
+import jp.wasabeef.glide.transformations.BlurTransformation
 
 class HomeBannerAdapter(
     private val onItemClick: (MovieItem) -> Unit
@@ -14,11 +16,20 @@ class HomeBannerAdapter(
 
     inner class BannerViewHolder(val binding: ItemBannerBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(bannerItem: MovieItem) {
-            // Use Glide to load the image from the URL
+            val imageUrl = bannerItem.primary_image_url
+
+            // 1. Load the main image with fitCenter (no crop)
             Glide.with(itemView.context)
-                .load(bannerItem.primary_image_url)
-                .placeholder(R.drawable.ic_movie_list) // Optional placeholder
+                .load(imageUrl)
+                .placeholder(R.drawable.ic_movie_list)
+                .fitCenter()
                 .into(binding.bannerImage)
+
+            // 2. Load the background image with centerCrop and a Blur
+            Glide.with(itemView.context)
+                .load(imageUrl)
+                .apply(RequestOptions.bitmapTransform(BlurTransformation(25, 3))) // 25 is radius, 3 is sampling
+                .into(binding.bannerImageBackground)
 
             binding.bannerTitle.text = bannerItem.title
             // Use the new fields for the description
