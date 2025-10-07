@@ -4,6 +4,7 @@ plugins {
     id("kotlin-parcelize")
     alias(libs.plugins.google.services)
     id("kotlin-kapt")
+    alias(libs.plugins.navigation.safe.args)
 }
 
 android {
@@ -59,6 +60,7 @@ dependencies {
     // Add Firebase dependencies
     implementation(libs.firebase.auth)
     implementation(libs.firebase.database)
+    implementation(libs.firebase.storage)
 
     // Glide for image loading
     implementation(libs.glide)
