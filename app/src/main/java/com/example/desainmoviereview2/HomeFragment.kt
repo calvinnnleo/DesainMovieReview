@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.viewpager2.widget.ViewPager2
 import com.example.desainmoviereview2.databinding.FragmentHomeBinding
 import com.google.firebase.database.*
+import java.util.Calendar
 
 class HomeFragment : Fragment() {
     private val handler = Handler(Looper.getMainLooper())
@@ -72,19 +73,24 @@ class HomeFragment : Fragment() {
         moviesRef.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val newMovies = mutableListOf<MovieItem>()
-                val newBanners = mutableListOf<MovieItem>()
 
                 for (movieSnapshot in snapshot.children) {
                     val movie = movieSnapshot.getValue(MovieItem::class.java)
                     if (movie != null) {
                         movie.movie_id = movieSnapshot.key
                         newMovies.add(movie)
-                        if (newBanners.size < 3) {
-                            newBanners.add(movie)
-                        }
                     }
                 }
-                homeListAdapter.submitList(newMovies)
+
+                val currentYear = Calendar.getInstance().get(Calendar.YEAR)
+                val moviesFromCurrentYear = newMovies.filter { it.year == currentYear }
+                val recommendedMovies = moviesFromCurrentYear.sortedWith(
+                    compareByDescending<MovieItem> { it.num_votes }
+                        .thenByDescending { it.rating })
+
+                val newBanners = recommendedMovies.take(3)
+
+                homeListAdapter.submitList(recommendedMovies)
                 homeBannerAdapter.submitList(newBanners)
 
                 if (newBanners.isNotEmpty()) {
