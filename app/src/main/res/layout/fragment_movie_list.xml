@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="?attr/colorSurfaceContainer"
+    android:background="?attr/colorSurface"
     tools:context=".MovieListFragment">
 
     <!-- Header -->
@@ -29,10 +29,12 @@
             android:layout_height="0dp"
             android:layout_weight="1" />
 
-        <Spinner
-            android:id="@+id/sortBySpinner"
+        <ImageButton
+            android:id="@+id/filter_button"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_filter_list"
+            android:background="?attr/selectableItemBackgroundBorderless" />
 
     </LinearLayout>
 
@@ -58,6 +60,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-        tools:listitem="@layout/item_movie" />
+        tools:listitem="@layout/item_movie_list" />
 
 </LinearLayout>

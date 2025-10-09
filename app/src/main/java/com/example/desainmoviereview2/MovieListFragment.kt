@@ -5,8 +5,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.AdapterView
-import android.widget.ArrayAdapter
+import android.widget.PopupMenu
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
@@ -36,7 +35,7 @@ class MovieListFragment : Fragment() {
         "Thriller",
         "Sci-Fi"
     )
-    private var currentSortBy = "Popularity"
+    private var currentSortBy = "Default"
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -52,7 +51,7 @@ class MovieListFragment : Fragment() {
         database = FirebaseDatabase.getInstance("https://movie-recommendation-b7ce0-default-rtdb.asia-southeast1.firebasedatabase.app").reference
 
         setupRecyclerView()
-        setupSortSpinner()
+        setupFilterMenu()
         setupFilterChips()
         fetchMoviesFromDatabase()
     }
@@ -66,22 +65,17 @@ class MovieListFragment : Fragment() {
         binding.recyclerView.adapter = movieListAdapter
     }
 
-    private fun setupSortSpinner() {
-        ArrayAdapter.createFromResource(
-            requireContext(),
-            R.array.sort_by_options,
-            android.R.layout.simple_spinner_item
-        ).also { adapter ->
-            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-            binding.sortBySpinner.adapter = adapter
-        }
+    private fun setupFilterMenu() {
+        binding.filterButton.setOnClickListener { view ->
+            val popupMenu = PopupMenu(requireContext(), view)
+            popupMenu.menuInflater.inflate(R.menu.sort_menu, popupMenu.menu)
 
-        binding.sortBySpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
-                currentSortBy = parent.getItemAtPosition(position).toString()
-                applyFiltersAndSorting() // Re-apply logic when selection changes
+            popupMenu.setOnMenuItemClickListener { menuItem ->
+                currentSortBy = menuItem.title.toString()
+                applyFiltersAndSorting()
+                true
             }
-            override fun onNothingSelected(parent: AdapterView<*>) {}
+            popupMenu.show()
         }
     }
 
@@ -150,14 +144,13 @@ class MovieListFragment : Fragment() {
         }
 
         // 2. Sort the filtered list
-        // Kalau mau tambah sort jangan lupa taro juga di strings.xml
         val sortedList = when (currentSortBy) {
-            "Ranking" -> filteredList.sortedWith(
+            "Default" -> filteredList.sortedWith(
                 compareByDescending<MovieItem> { it.num_votes }
                     .thenByDescending { it.rating }
             )
             "Rating" -> filteredList.sortedByDescending { it.rating }
-            "Release Date" -> filteredList.sortedByDescending { it.year }
+            "Newest" -> filteredList.sortedByDescending { it.year }
             else -> filteredList.sortedByDescending { it.title }
         }
         movieListAdapter.updateMovies(sortedList)

@@ -87,7 +87,7 @@ class ForumFragment : Fragment() {
         movieItem?.let {
             binding.movieTitle.text = it.title
             binding.movieDescription.text = it.overview
-            binding.movieRatingBar.rating = it.rating?.toFloat() ?: 0f
+            binding.movieRatingBar.rating = (it.rating?.toFloat() ?: 0f) / 2f
             Glide.with(this)
                 .load(it.primary_image_url)
                 .placeholder(R.drawable.ic_movie_list)

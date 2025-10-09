@@ -4,45 +4,42 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginStart="8dp"
-    android:layout_marginTop="8dp"
-    android:layout_marginEnd="8dp"
-    app:cardCornerRadius="4dp">
+    android:layout_margin="8dp"
+    app:cardCornerRadius="8dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="8dp">
+        android:padding="16dp">
 
         <ImageView
-            android:id="@+id/profile_picture"
+            android:id="@+id/author_avatar"
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:scaleType="centerCrop"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             tools:src="@tools:sample/avatars" />
 
         <TextView
-            android:id="@+id/textViewAuthor"
+            android:id="@+id/author_name"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
+            android:layout_marginStart="16dp"
             android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/profile_picture"
-            app:layout_constraintTop_toTopOf="parent"
-            tools:text="User Name" />
+            app:layout_constraintStart_toEndOf="@+id/author_avatar"
+            app:layout_constraintTop_toTopOf="@+id/author_avatar"
+            tools:text="Author Name" />
 
         <TextView
-            android:id="@+id/textViewPostContent"
+            android:id="@+id/post_content"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="8dp"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="@+id/textViewAuthor"
-            app:layout_constraintTop_toBottomOf="@+id/textViewAuthor"
-            tools:text="This is a forum post. The user is commenting on the movie." />
+            app:layout_constraintStart_toStartOf="@+id/author_name"
+            app:layout_constraintTop_toBottomOf="@+id/author_name"
+            tools:text="This is a sample forum post content." />
 
         <RatingBar
             android:id="@+id/post_rating"
@@ -51,51 +48,60 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:numStars="5"
-            android:stepSize="1.0"
-            app:layout_constraintStart_toStartOf="@+id/textViewPostContent"
-            app:layout_constraintTop_toBottomOf="@+id/textViewPostContent" />
+            android:stepSize="1"
+            app:layout_constraintStart_toStartOf="@+id/post_content"
+            app:layout_constraintTop_toBottomOf="@+id/post_content" />
+
+        <TextView
+            android:id="@+id/post_timestamp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textSize="12sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/post_content"
+            tools:text="2 hours ago" />
 
         <Button
             android:id="@+id/reply_button"
-            style="?attr/materialButtonOutlinedStyle"
+            style="?attr/borderlessButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Reply"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="@+id/post_rating"
             app:layout_constraintTop_toBottomOf="@+id/post_rating" />
 
         <LinearLayout
             android:id="@+id/reply_layout"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintStart_toStartOf="@+id/author_name"
             app:layout_constraintTop_toBottomOf="@+id/reply_button">
 
             <EditText
                 android:id="@+id/reply_edit_text"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Write your reply..." />
+                android:hint="Write a reply..." />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="end"
                 android:orientation="horizontal">
 
                 <Button
                     android:id="@+id/cancel_reply_button"
-                    style="?attr/materialButtonOutlinedStyle"
+                    style="?attr/borderlessButtonStyle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Cancel" />
 
                 <Button
                     android:id="@+id/submit_reply_button"
-                    style="?attr/materialButtonOutlinedStyle"
+                    style="?attr/borderlessButtonStyle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Submit" />
@@ -108,7 +114,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="@+id/textViewPostContent"
+            app:layout_constraintStart_toStartOf="@+id/author_name"
             app:layout_constraintTop_toBottomOf="@+id/reply_layout" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>

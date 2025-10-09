@@ -8,7 +8,6 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import kotlin.text.format
 import java.util.Locale
 
 class MovieListAdapter(
@@ -26,12 +25,43 @@ class MovieListAdapter(
         private val posterImageView: ImageView = itemView.findViewById(R.id.movie_poster)
         private val titleTextView: TextView = itemView.findViewById(R.id.movie_title)
         private val descTextView: TextView = itemView.findViewById(R.id.movie_desc)
+        private val detailsTextView: TextView = itemView.findViewById(R.id.movie_details)
+        private val directorTextView: TextView = itemView.findViewById(R.id.movie_director)
+        private val writersTextView: TextView = itemView.findViewById(R.id.movie_writers)
 
         fun bind(movie: MovieItem, listener: (MovieItem) -> Unit) {
             titleTextView.text = movie.title
+            descTextView.text = movie.genres ?: ""
 
             val ratingText = String.format(Locale.US, "%.1f", movie.rating ?: 0.0)
-            descTextView.text = "${movie.genres} | Rating: $ratingText"
+            val yearText = movie.year?.toString() ?: "N/A"
+            val runtimeText = movie.runtime_minutes?.toInt()?.toString()?.let { "$it min" } ?: "N/A"
+
+            detailsTextView.text = "$yearText | $runtimeText | Rating: $ratingText"
+
+            if (movie.directors == movie.writers) {
+                if (movie.directors != null) {
+                    directorTextView.text = "Director & Writer: ${movie.directors}"
+                    writersTextView.visibility = View.GONE
+                } else {
+                    directorTextView.visibility = View.GONE
+                    writersTextView.visibility = View.GONE
+                }
+            } else {
+                if (movie.directors != null) {
+                    directorTextView.text = "Director: ${movie.directors}"
+                    directorTextView.visibility = View.VISIBLE
+                } else {
+                    directorTextView.visibility = View.GONE
+                }
+
+                if (movie.writers != null) {
+                    writersTextView.text = "Writers: ${movie.writers}"
+                    writersTextView.visibility = View.VISIBLE
+                } else {
+                    writersTextView.visibility = View.GONE
+                }
+            }
 
             Glide.with(itemView.context)
                 .load(movie.primary_image_url)

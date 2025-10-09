@@ -56,7 +56,21 @@
         android:id="@+id/homeFragment"
         android:name="com.example.desainmoviereview2.HomeFragment"
         android:label="HomeFragment"
-        tools:layout="@layout/fragment_home"/>
+        tools:layout="@layout/fragment_home">
+        <action
+            android:id="@+id/action_homeFragment_to_recommendationFragment"
+            app:destination="@id/recommendationFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/recommendationFragment"
+        android:name="com.example.desainmoviereview2.RecommendationFragment"
+        android:label="RecommendationFragment"
+        tools:layout="@layout/fragment_recommendation">
+        <argument
+            android:name="imdbID"
+            app:argType="string" />
+    </fragment>
 
     <fragment
         android:id="@+id/movieListFragment"

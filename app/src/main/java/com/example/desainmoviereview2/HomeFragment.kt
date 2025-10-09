@@ -7,6 +7,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.widget.SearchView
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
@@ -46,6 +47,47 @@ class HomeFragment : Fragment() {
 
         setupRecyclerViews()
         fetchMovies()
+        setupSearchView()
+    }
+
+    private fun setupSearchView() {
+        binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                if (!query.isNullOrEmpty()) {
+                    searchMovie(query)
+                }
+                return true
+            }
+
+            override fun onQueryTextChange(newText: String?): Boolean {
+                return false
+            }
+        })
+    }
+
+    private fun searchMovie(title: String) {
+        val moviesRef = database.child("movies")
+        moviesRef.orderByChild("title").equalTo(title).limitToFirst(1).addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                if (snapshot.exists()) {
+                    for (movieSnapshot in snapshot.children) {
+                        val movie = movieSnapshot.getValue(MovieItem::class.java)
+                        if (movie != null) {
+                            movie.movie_id = movieSnapshot.key
+                            val bundle = bundleOf("imdbID" to movie.movie_id)
+                            findNavController().navigate(R.id.action_homeFragment_to_recommendationFragment, bundle)
+                        }
+                    }
+                }
+                 else {
+                    Log.d("HomeFragment", "Movie with title '$title' not found.")
+                }
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Log.e("HomeFragment", "Failed to search for movie.", error.toException())
+            }
+        })
     }
 
     private fun setupRecyclerViews() {
