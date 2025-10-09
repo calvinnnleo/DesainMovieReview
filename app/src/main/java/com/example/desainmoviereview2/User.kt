@@ -9,5 +9,5 @@ data class User(
     val email: String = "",
     val joinedDate: Long = 0L,
     val fullName: String = "",
-    val avatarUrl: String = ""
+    val avatarBase64: String = ""
 )

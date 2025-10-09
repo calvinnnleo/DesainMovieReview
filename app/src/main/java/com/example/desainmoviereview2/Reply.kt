@@ -8,6 +8,7 @@ data class Reply(
     val post_id: String? = null,
     val author_uid: String? = null,
     val author_username: String? = null,
+    val author_avatar_base64: String? = "",
     val content: String? = null,
     val created_at: Long? = null
 ) : Parcelable

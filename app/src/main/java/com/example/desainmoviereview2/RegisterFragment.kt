@@ -73,7 +73,7 @@ class RegisterFragment : Fragment() {
                             email = email,
                             joinedDate = System.currentTimeMillis(),
                             fullName = fullName,
-                            avatarUrl = ""
+                            avatarBase64 = ""
                         )
                         val database = FirebaseDatabase.getInstance("https://movie-recommendation-b7ce0-default-rtdb.asia-southeast1.firebasedatabase.app").getReference("users")
                         database.child(uid).setValue(user).addOnCompleteListener { dbTask ->

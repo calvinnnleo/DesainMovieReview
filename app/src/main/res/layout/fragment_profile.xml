@@ -24,16 +24,36 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <ImageView
-            android:id="@+id/imageViewProfilePic"
-            android:layout_width="96dp"
-            android:layout_height="96dp"
+        <androidx.cardview.widget.CardView
+            android:id="@+id/profile_image_card"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
             android:layout_marginTop="24dp"
+            app:cardCornerRadius="50dp"
+            app:cardElevation="4dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/textViewProfileTitle"
-            android:src="@drawable/ic_profile"
-            app:tint="?attr/colorPrimary"/>
+            app:layout_constraintTop_toBottomOf="@id/textViewProfileTitle">
+
+            <ImageView
+                android:id="@+id/imageViewProfilePic"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:src="@drawable/ic_profile"
+                app:tint="?attr/colorPrimary"/>
+        </androidx.cardview.widget.CardView>
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/edit_profile_image_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_edit"
+            app:fabCustomSize="35dp"
+            app:maxImageSize="20dp"
+            app:layout_constraintBottom_toBottomOf="@+id/profile_image_card"
+            app:layout_constraintEnd_toEndOf="@+id/profile_image_card" />
+
 
         <TextView
             android:id="@+id/textViewEmailLabel"
@@ -43,7 +63,7 @@
             android:text="Email Address"
             android:textAppearance="@style/TextAppearance.MaterialComponents.Caption"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/imageViewProfilePic" />
+            app:layout_constraintTop_toBottomOf="@+id/profile_image_card" />
 
         <TextView
             android:id="@+id/textViewEmail"
@@ -86,7 +106,7 @@
             android:text="Save Changes"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/textFieldUsername" />
+            app:layout_constraintTop_toBottomOf="@+id/textFieldUsername" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/buttonLogout"
@@ -97,7 +117,7 @@
             android:text="Logout"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/buttonSaveProfile" />
+            app:layout_constraintTop_toBottomOf="@+id/buttonSaveProfile" />
 
         <ProgressBar
             android:id="@+id/progressBar"

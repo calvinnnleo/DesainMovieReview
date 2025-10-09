@@ -147,11 +147,7 @@ class ForumFragment : Fragment() {
     }
 
     private fun submitNewPost() {
-        val user = auth.currentUser
-        if (user == null) {
-            Toast.makeText(requireContext(), "You must be logged in to post.", Toast.LENGTH_SHORT).show()
-            return
-        }
+        val user = auth.currentUser ?: return
 
         val currentMovieId = movieItem?.movie_id
         val content = binding.newPostEditText.text.toString().trim()
@@ -161,8 +157,10 @@ class ForumFragment : Fragment() {
             return
         }
 
-        usersRef.child(user.uid).child("username").get().addOnSuccessListener { usernameSnapshot ->
-            val username = usernameSnapshot.getValue(String::class.java) ?: "Anonymous"
+        usersRef.child(user.uid).get().addOnSuccessListener { dataSnapshot ->
+            val userProfile = dataSnapshot.getValue(User::class.java)
+            val username = userProfile?.username ?: "Anonymous"
+            val avatarBase64 = userProfile?.avatarBase64 ?: ""
 
             val newPostRef = forumPostsRef.push()
             val postId = newPostRef.key
@@ -173,6 +171,7 @@ class ForumFragment : Fragment() {
                 "content" to content,
                 "author_uid" to user.uid,
                 "author_username" to username,
+                "author_avatar_base64" to avatarBase64,
                 "user_rating" to binding.ratingBar.rating.toInt(),
                 "created_at" to ServerValue.TIMESTAMP
             )
@@ -193,21 +192,18 @@ class ForumFragment : Fragment() {
     }
 
     fun submitReplyToPost(post: ForumPost, replyContent: String) {
-        val user = auth.currentUser
-        val parentPostId = post.post_id
-
-        if (user == null || parentPostId == null) {
-            Toast.makeText(requireContext(), "You must be logged in to reply.", Toast.LENGTH_SHORT).show()
-            return
-        }
+        val user = auth.currentUser ?: return
+        val parentPostId = post.post_id ?: return
 
         if (replyContent.isEmpty()) {
             Toast.makeText(requireContext(), "Reply cannot be empty.", Toast.LENGTH_SHORT).show()
             return
         }
 
-        usersRef.child(user.uid).child("username").get().addOnSuccessListener { usernameSnapshot ->
-            val username = usernameSnapshot.getValue(String::class.java) ?: "Anonymous"
+        usersRef.child(user.uid).get().addOnSuccessListener { dataSnapshot ->
+            val userProfile = dataSnapshot.getValue(User::class.java)
+            val username = userProfile?.username ?: "Anonymous"
+            val avatarBase64 = userProfile?.avatarBase64 ?: ""
 
             val repliesRef = forumPostsRef.child(parentPostId).child("replies")
 
@@ -218,6 +214,7 @@ class ForumFragment : Fragment() {
                 "post_id" to replyId,
                 "author_uid" to user.uid,
                 "author_username" to username,
+                "author_avatar_base64" to avatarBase64,
                 "content" to replyContent,
                 "created_at" to ServerValue.TIMESTAMP
             )

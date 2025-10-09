@@ -1,11 +1,14 @@
 package com.example.desainmoviereview2
 
+import android.util.Base64
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.example.desainmoviereview2.databinding.ItemForumPostBinding
 
 class ForumPostAdapter(
@@ -34,6 +37,26 @@ class ForumPostAdapter(
             binding.textViewPostContent.text = post.content
 
             binding.postRating.rating = post.user_rating?.toFloat() ?: 0f
+
+            if (post.author_avatar_base64.isNullOrBlank()) {
+                Glide.with(itemView.context)
+                    .load(R.drawable.ic_anonymous)
+                    .circleCrop()
+                    .into(binding.profilePicture)
+            } else {
+                try {
+                    val imageBytes = Base64.decode(post.author_avatar_base64, Base64.DEFAULT)
+                    Glide.with(itemView.context)
+                        .load(imageBytes)
+                        .circleCrop()
+                        .into(binding.profilePicture)
+                } catch (e: IllegalArgumentException) {
+                    Glide.with(itemView.context)
+                        .load(R.drawable.ic_anonymous)
+                        .circleCrop()
+                        .into(binding.profilePicture)
+                }
+            }
 
             binding.replyButton.setOnClickListener {
                 val isReplyLayoutVisible = binding.replyLayout.visibility == View.VISIBLE
@@ -79,10 +102,31 @@ class CommentAdapter(private val comments: List<Reply>) : RecyclerView.Adapter<C
     class CommentViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val textViewAuthor: TextView = itemView.findViewById(R.id.textViewAuthor)
         private val textViewComment: TextView = itemView.findViewById(R.id.textViewComment)
+        private val profilePicture: ImageView = itemView.findViewById(R.id.profile_picture)
 
         fun bind(comment: Reply) {
             textViewAuthor.text = comment.author_username ?: "Anonymous"
             textViewComment.text = comment.content
+
+            if (comment.author_avatar_base64.isNullOrBlank()) {
+                Glide.with(itemView.context)
+                    .load(R.drawable.ic_anonymous)
+                    .circleCrop()
+                    .into(profilePicture)
+            } else {
+                try {
+                    val imageBytes = Base64.decode(comment.author_avatar_base64, Base64.DEFAULT)
+                    Glide.with(itemView.context)
+                        .load(imageBytes)
+                        .circleCrop()
+                        .into(profilePicture)
+                } catch (e: IllegalArgumentException) {
+                    Glide.with(itemView.context)
+                        .load(R.drawable.ic_anonymous)
+                        .circleCrop()
+                        .into(profilePicture)
+                }
+            }
         }
     }
 }
