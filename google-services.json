@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "206524711167",
+    "firebase_url": "https://movie-recommendation-b7ce0-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "movie-recommendation-b7ce0",
+    "storage_bucket": "movie-recommendation-b7ce0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:206524711167:android:f91bd7438309f1cee4ccca",
+        "android_client_info": {
+          "package_name": "com.example.desainmoviereview2"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "206524711167-i8g7skt8laa20hombom0e00v6ns5q546.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAbQhrDRndSiVKH2xYvDgPrEDMiOc42enk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "206524711167-i8g7skt8laa20hombom0e00v6ns5q546.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
