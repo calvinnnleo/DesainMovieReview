@@ -24,8 +24,11 @@ import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
 import com.example.desainmoviereview2.databinding.FragmentProfileBinding
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.IOException
@@ -74,7 +77,7 @@ class ProfileFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         auth = FirebaseAuth.getInstance()
-        database = FirebaseDatabase.getInstance("https://movie-recommendation-b7ce0-default-rtdb.asia-southeast1.firebasedatabase.app").getReference("users")
+        database = FirebaseDatabase.getInstance("https://movie-recommendation-b7ce0-default-rtdb.asia-southeast1.firebasedatabase.app").reference
 
         loadUserProfile()
 
@@ -200,15 +203,21 @@ class ProfileFragment : Fragment() {
     }
 
     private fun updateUserInDatabase(userId: String, updates: Map<String, Any>) {
-        database.child(userId).updateChildren(updates).addOnSuccessListener {
+        database.child("users").child(userId).updateChildren(updates).addOnSuccessListener {
             if (_binding == null) return@addOnSuccessListener
-            binding.progressBar.visibility = View.GONE
+            if (updates.isNotEmpty()) {
+                updateUserContributions(userId, updates)
+            } else {
+                binding.progressBar.visibility = View.GONE
+                binding.buttonSaveProfile.isEnabled = false
+            }
+
             Toast.makeText(requireContext(), "Profile updated successfully", Toast.LENGTH_SHORT).show()
             if (updates.containsKey("username")) {
                 originalUsername = updates["username"] as String
             }
             imageUri = null
-            binding.buttonSaveProfile.isEnabled = false
+
         }.addOnFailureListener { e ->
             if (_binding == null) return@addOnFailureListener
             binding.progressBar.visibility = View.GONE
@@ -218,12 +227,68 @@ class ProfileFragment : Fragment() {
         }
     }
 
+    private fun updateUserContributions(userId: String, updates: Map<String, Any>) {
+        val forumPostsRef = database.child("forum_posts")
+        val contributionUpdates = mutableMapOf<String, Any?>()
+
+        forumPostsRef.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                for (postSnapshot in snapshot.children) {
+                    val post = postSnapshot.getValue(ForumPost::class.java)
+                    if (post?.author_uid == userId) {
+                        if (updates.containsKey("username")) {
+                            contributionUpdates["${postSnapshot.key}/author_username"] = updates["username"]
+                        }
+                        if (updates.containsKey("avatarBase64")) {
+                            contributionUpdates["${postSnapshot.key}/author_avatar_base64"] = updates["avatarBase64"]
+                        }
+                    }
+
+                    for (replySnapshot in postSnapshot.child("replies").children) {
+                        val reply = replySnapshot.getValue(Reply::class.java)
+                        if (reply?.author_uid == userId) {
+                            if (updates.containsKey("username")) {
+                                contributionUpdates["${postSnapshot.key}/replies/${replySnapshot.key}/author_username"] = updates["username"]
+                            }
+                            if (updates.containsKey("avatarBase64")) {
+                                contributionUpdates["${postSnapshot.key}/replies/${replySnapshot.key}/author_avatar_base64"] = updates["avatarBase64"]
+                            }
+                        }
+                    }
+                }
+
+                if (contributionUpdates.isNotEmpty()) {
+                    forumPostsRef.updateChildren(contributionUpdates).addOnCompleteListener {
+                        if (_binding != null) {
+                            binding.progressBar.visibility = View.GONE
+                            binding.buttonSaveProfile.isEnabled = false
+                        }
+                    }
+                } else {
+                    if (_binding != null) {
+                        binding.progressBar.visibility = View.GONE
+                        binding.buttonSaveProfile.isEnabled = false
+                    }
+                }
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                if (_binding != null) {
+                    binding.progressBar.visibility = View.GONE
+                    binding.buttonSaveProfile.isEnabled = true
+                    Toast.makeText(requireContext(), "Failed to update contributions: ${error.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        })
+    }
+
+
     private fun loadUserProfile() {
         val userId = auth.currentUser?.uid ?: return
 
         binding.textViewEmail.text = auth.currentUser?.email
 
-        database.child(userId).get().addOnSuccessListener { dataSnapshot ->
+        database.child("users").child(userId).get().addOnSuccessListener { dataSnapshot ->
             if (_binding == null || !dataSnapshot.exists()) return@addOnSuccessListener
 
             val userProfile = dataSnapshot.getValue(User::class.java)
