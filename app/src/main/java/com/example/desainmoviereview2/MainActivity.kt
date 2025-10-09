@@ -3,6 +3,7 @@ package com.example.desainmoviereview2
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.navigation.fragment.NavHostFragment
@@ -32,6 +33,16 @@ class MainActivity : AppCompatActivity() {
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_nav)
 
         navController.addOnDestinationChangedListener { _, destination, _ ->
+            // Show/hide search view based on destination
+            when (destination.id) {
+                R.id.homeFragment, R.id.movieListFragment -> {
+                    binding.searchView.visibility = View.VISIBLE
+                }
+                else -> {
+                    binding.searchView.visibility = View.GONE
+                }
+            }
+
             // Update the selected item in the bottom navigation
             val menuItem = bottomNav.menu.findItem(destination.id)
             if (menuItem != null) {

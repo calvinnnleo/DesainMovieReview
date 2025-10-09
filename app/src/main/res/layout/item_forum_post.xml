@@ -24,7 +24,7 @@
             tools:src="@tools:sample/avatars" />
 
         <TextView
-            android:id="@+id/textViewAuthor" 
+            android:id="@+id/textViewAuthor"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
@@ -57,7 +57,7 @@
 
         <Button
             android:id="@+id/reply_button"
-            style="?android:attr/borderlessButtonStyle"
+            style="?attr/materialButtonOutlinedStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Reply"
@@ -83,19 +83,19 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="end">
+                android:gravity="end"
+                android:orientation="horizontal">
 
                 <Button
                     android:id="@+id/cancel_reply_button"
-                    style="?android:attr/borderlessButtonStyle"
+                    style="?attr/materialButtonOutlinedStyle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Cancel" />
 
                 <Button
                     android:id="@+id/submit_reply_button"
-                    style="?android:attr/borderlessButtonStyle"
+                    style="?attr/materialButtonOutlinedStyle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Submit" />

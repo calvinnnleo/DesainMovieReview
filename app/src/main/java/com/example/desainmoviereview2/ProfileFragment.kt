@@ -181,7 +181,6 @@ class ProfileFragment : Fragment() {
             if (updates.isNotEmpty()) {
                 updateUserInDatabase(userId, updates)
             } else {
-                // Nothing to update
                 binding.progressBar.visibility = View.GONE
                 binding.buttonSaveProfile.isEnabled = false
             }
@@ -193,7 +192,7 @@ class ProfileFragment : Fragment() {
             val inputStream = requireContext().contentResolver.openInputStream(uri)
             val bitmap = BitmapFactory.decodeStream(inputStream)
             val outputStream = ByteArrayOutputStream()
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 50, outputStream) // Compress to save space
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 50, outputStream)
             val byteArray = outputStream.toByteArray()
             Base64.encodeToString(byteArray, Base64.DEFAULT)
         } catch (e: IOException) {
@@ -205,18 +204,26 @@ class ProfileFragment : Fragment() {
     private fun updateUserInDatabase(userId: String, updates: Map<String, Any>) {
         database.child("users").child(userId).updateChildren(updates).addOnSuccessListener {
             if (_binding == null) return@addOnSuccessListener
-            if (updates.isNotEmpty()) {
-                updateUserContributions(userId, updates)
-            } else {
-                binding.progressBar.visibility = View.GONE
-                binding.buttonSaveProfile.isEnabled = false
-            }
 
-            Toast.makeText(requireContext(), "Profile updated successfully", Toast.LENGTH_SHORT).show()
             if (updates.containsKey("username")) {
                 originalUsername = updates["username"] as String
             }
             imageUri = null
+
+            if (updates.isNotEmpty()) {
+                updateUserContributions(userId, updates) {
+                    if (_binding != null) {
+                        Toast.makeText(requireContext(), "Profile and all contributions updated successfully", Toast.LENGTH_SHORT).show()
+                        binding.progressBar.visibility = View.GONE
+                        binding.buttonSaveProfile.isEnabled = false
+                        loadUserProfile() // Reload to show new PFP
+                    }
+                }
+            } else {
+                // This case should not happen if we get here, but as a fallback:
+                binding.progressBar.visibility = View.GONE
+                binding.buttonSaveProfile.isEnabled = false
+            }
 
         }.addOnFailureListener { e ->
             if (_binding == null) return@addOnFailureListener
@@ -227,15 +234,14 @@ class ProfileFragment : Fragment() {
         }
     }
 
-    private fun updateUserContributions(userId: String, updates: Map<String, Any>) {
+    private fun updateUserContributions(userId: String, updates: Map<String, Any>, onComplete: () -> Unit) {
         val forumPostsRef = database.child("forum_posts")
         val contributionUpdates = mutableMapOf<String, Any?>()
 
         forumPostsRef.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 for (postSnapshot in snapshot.children) {
-                    val post = postSnapshot.getValue(ForumPost::class.java)
-                    if (post?.author_uid == userId) {
+                    if (postSnapshot.child("author_uid").value == userId) {
                         if (updates.containsKey("username")) {
                             contributionUpdates["${postSnapshot.key}/author_username"] = updates["username"]
                         }
@@ -245,8 +251,7 @@ class ProfileFragment : Fragment() {
                     }
 
                     for (replySnapshot in postSnapshot.child("replies").children) {
-                        val reply = replySnapshot.getValue(Reply::class.java)
-                        if (reply?.author_uid == userId) {
+                        if (replySnapshot.child("author_uid").value == userId) {
                             if (updates.containsKey("username")) {
                                 contributionUpdates["${postSnapshot.key}/replies/${replySnapshot.key}/author_username"] = updates["username"]
                             }
@@ -259,16 +264,10 @@ class ProfileFragment : Fragment() {
 
                 if (contributionUpdates.isNotEmpty()) {
                     forumPostsRef.updateChildren(contributionUpdates).addOnCompleteListener {
-                        if (_binding != null) {
-                            binding.progressBar.visibility = View.GONE
-                            binding.buttonSaveProfile.isEnabled = false
-                        }
+                        onComplete()
                     }
                 } else {
-                    if (_binding != null) {
-                        binding.progressBar.visibility = View.GONE
-                        binding.buttonSaveProfile.isEnabled = false
-                    }
+                    onComplete()
                 }
             }
 
