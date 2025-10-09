@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.desainmoviereview2.databinding.FragmentMovieListBinding
 import com.google.android.material.chip.Chip
 import com.google.firebase.database.*
+import java.util.Locale
 
 class MovieListFragment : Fragment() {
 
@@ -79,18 +80,17 @@ class MovieListFragment : Fragment() {
         binding.sortBySpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
                 currentSortBy = parent.getItemAtPosition(position).toString()
-                applyFiltersAndSorting() // Re-apply logic when selection changes
+                applyFiltersAndSorting()
             }
             override fun onNothingSelected(parent: AdapterView<*>) {}
         }
     }
 
     private fun setupFilterChips() {
-        // Clear any chips that might exist from the XML layout (good practice)
         binding.filterChipGroup.removeAllViews()
 
         for (genre in filterGenres) {
-            val chip = Chip(context) // Create a new Chip
+            val chip = Chip(context)
             chip.text = genre
             chip.isClickable = true
             chip.isCheckable = true
@@ -104,7 +104,6 @@ class MovieListFragment : Fragment() {
 
         binding.filterChipGroup.setOnCheckedStateChangeListener { group, checkedIds ->
             if (checkedIds.isEmpty()) {
-                // If the user unchecks everything, we can default back to the first chip ("All")
                 (group.getChildAt(0) as? Chip)?.isChecked = true
                 return@setOnCheckedStateChangeListener
             }
@@ -124,7 +123,6 @@ class MovieListFragment : Fragment() {
                 for (snapshot in dataSnapshot.children) {
                     val movie = snapshot.getValue(MovieItem::class.java)
                     if (movie != null) {
-                        // **FIX:** Manually set the movie_id from the snapshot's key
                         movie.movie_id = snapshot.key
                         movieList.add(movie)
                     }
@@ -140,17 +138,16 @@ class MovieListFragment : Fragment() {
     }
 
     private fun applyFiltersAndSorting() {
-        // 1. Filter the list by genre
         val filteredList = if (currentGenreFilter == "All") {
             movieList
         } else {
             movieList.filter { movie ->
-                movie.genres?.contains(currentGenreFilter, ignoreCase = true) == true
+                movie.genres?.any { genre ->
+                    genre.lowercase(Locale.getDefault()).contains(currentGenreFilter.lowercase(Locale.getDefault()))
+                } == true
             }
         }
 
-        // 2. Sort the filtered list
-        // Kalau mau tambah sort jangan lupa taro juga di strings.xml
         val sortedList = when (currentSortBy) {
             "Ranking" -> filteredList.sortedWith(
                 compareByDescending<MovieItem> { it.num_votes }

@@ -7,12 +7,12 @@ import kotlinx.parcelize.Parcelize
 @IgnoreExtraProperties
 @Parcelize
 data class MovieItem(
-    // Changed to var to allow setting the key from the snapshot
     var movie_id: String? = null,
     val title: String? = null,
     val year: Int? = null,
     val rating: Double? = null,
-    val num_votes: Double? = null,
+    // Change Int to Int? to allow null values
+    val num_votes: Int? = null,
     val runtime_minutes: Double? = null,
     val directors: String? = null,
     val writers: String? = null,
