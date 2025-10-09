@@ -1,6 +1,5 @@
 package com.example.desainmoviereview2
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -38,10 +37,8 @@ class LoginFragment : Fragment() {
                 auth.signInWithEmailAndPassword(email, password)
                     .addOnCompleteListener(requireActivity()) { task ->
                         if (task.isSuccessful) {
-                            // Sign in success, navigate to MainActivity
-                            val intent = Intent(requireActivity(), MainActivity::class.java)
-                            startActivity(intent)
-                            requireActivity().finish()
+                            // Sign in success, navigate to the home fragment
+                            findNavController().navigate(R.id.action_loginFragment_to_homeFragment)
                         } else {
                             // If sign in fails, display a message to the user.
                             Toast.makeText(

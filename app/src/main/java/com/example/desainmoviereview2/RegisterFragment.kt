@@ -1,6 +1,7 @@
 package com.example.desainmoviereview2
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -9,7 +10,6 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.example.desainmoviereview2.databinding.FragmentRegisterBinding
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 
 class RegisterFragment : Fragment() {
@@ -18,7 +18,6 @@ class RegisterFragment : Fragment() {
     private val binding get() = _binding!!
 
     private lateinit var auth: FirebaseAuth
-    private lateinit var database: DatabaseReference
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -32,7 +31,6 @@ class RegisterFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         auth = FirebaseAuth.getInstance()
-        database = FirebaseDatabase.getInstance("https://movie-recommendation-b7ce0-default-rtdb.asia-southeast1.firebasedatabase.app").reference
 
         binding.buttonRegister.setOnClickListener {
             registerUser()
@@ -44,11 +42,12 @@ class RegisterFragment : Fragment() {
     }
 
     private fun registerUser() {
+        val fullName = binding.editTextFullName.text.toString().trim()
+        val username = binding.editTextUsername.text.toString().trim()
         val email = binding.editTextEmail.text.toString().trim()
         val password = binding.editTextPassword.text.toString().trim()
-        val username = binding.editTextUsername.text.toString().trim() // Changed from editTextNickname
 
-        if (email.isEmpty() || password.isEmpty() || username.isEmpty()) {
+        if (fullName.isEmpty() || username.isEmpty() || email.isEmpty() || password.isEmpty()) {
             Toast.makeText(context, "Please fill all fields", Toast.LENGTH_SHORT).show()
             return
         }
@@ -56,29 +55,31 @@ class RegisterFragment : Fragment() {
         auth.createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener(requireActivity()) { task ->
                 if (task.isSuccessful) {
-                    val uid = task.result.user?.uid
-
+                    val firebaseUser = task.result.user
+                    val uid = firebaseUser?.uid
                     if (uid != null) {
                         val user = User(
                             uid = uid,
-                            username = username, // Changed from nickname
+                            username = username,
                             email = email,
-                            joinedDate = System.currentTimeMillis()
+                            joinedDate = System.currentTimeMillis(),
+                            fullName = fullName,
+                            avatarUrl = ""
                         )
-
-                        database.child("users").child(uid).setValue(user)
-                            .addOnSuccessListener {
-                                Toast.makeText(context, "Registration successful!", Toast.LENGTH_SHORT).show()
-                                // Navigate to home after successful registration
-                                findNavController().navigate(R.id.action_registerFragment_to_homeFragment) 
+                        val database = FirebaseDatabase.getInstance("https://movie-recommendation-b7ce0-default-rtdb.asia-southeast1.firebasedatabase.app").getReference("users")
+                        database.child(uid).setValue(user).addOnCompleteListener { dbTask ->
+                            if (dbTask.isSuccessful) {
+                                findNavController().navigate(R.id.action_registerFragment_to_homeFragment)
+                            } else {
+                                Log.e("RegisterFragment", "Database error", dbTask.exception)
+                                Toast.makeText(context, "Database error: ${dbTask.exception?.message}", Toast.LENGTH_LONG).show()
                             }
-                            .addOnFailureListener { e ->
-                                Toast.makeText(context, "Database error: ${e.message}", Toast.LENGTH_LONG).show()
-                            }
+                        }
                     } else {
                         Toast.makeText(context, "Registration failed: Could not get user ID.", Toast.LENGTH_SHORT).show()
                     }
                 } else {
+                    Log.e("RegisterFragment", "Registration failed", task.exception)
                     Toast.makeText(context, "Registration failed: ${task.exception?.message}", Toast.LENGTH_LONG).show()
                 }
             }

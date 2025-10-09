@@ -26,24 +26,17 @@ class SplashFragment : Fragment() {
         auth = FirebaseAuth.getInstance()
 
         Handler(Looper.getMainLooper()).postDelayed({
-            // Check if the fragment is still added and the view is available
-            if (isAdded && view != null) {
+            if (isAdded) {
                 checkUserStatus()
             }
         }, 2000) // 2 second delay
     }
 
     private fun checkUserStatus() {
-        val navController = findNavController()
-        // Make sure the current destination is the SplashFragment before navigating
-        if (navController.currentDestination?.id == R.id.splashFragment) {
-            if (auth.currentUser != null) {
-                // If user is logged in, go to the main screen
-                navController.navigate(R.id.action_splashFragment_to_homeFragment)
-            } else {
-                // If user is not logged in, go to the login screen
-                navController.navigate(R.id.action_splashFragment_to_loginFragment)
-            }
+        if (auth.currentUser != null) {
+            findNavController().navigate(R.id.action_splashFragment_to_homeFragment)
+        } else {
+            findNavController().navigate(R.id.action_splashFragment_to_loginFragment)
         }
     }
 }
