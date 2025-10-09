@@ -32,8 +32,7 @@
         <Spinner
             android:id="@+id/sortBySpinner"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:contentDescription="spinner"/>
+            android:layout_height="wrap_content"/>
 
     </LinearLayout>
 
@@ -49,43 +48,6 @@
             android:layout_height="wrap_content"
             app:singleLine="true"
             app:singleSelection="true">
-
-            <!-- Here are our filter chips. You can add more as needed. -->
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipPopular"
-                style="@style/Widget.MaterialComponents.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="All"
-                android:checked="true" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipAction"
-                style="@style/Widget.MaterialComponents.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Action" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipComedy"
-                style="@style/Widget.MaterialComponents.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Comedy" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipHorror"
-                style="@style/Widget.MaterialComponents.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Horror" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipDrama"
-                style="@style/Widget.MaterialComponents.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Drama" />
 
         </com.google.android.material.chip.ChipGroup>
     </HorizontalScrollView>

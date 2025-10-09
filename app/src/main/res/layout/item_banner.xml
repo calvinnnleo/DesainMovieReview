@@ -10,8 +10,7 @@
         android:layout_height="match_parent"
         android:scaleType="centerCrop" />
 
-    <!-- 2. GAMBAR UTAMA (FOREGROUND) -->
-    <!-- Ini TIDAK akan di-crop -->
+
     <ImageView
         android:id="@+id/bannerImage"
         android:layout_width="match_parent"

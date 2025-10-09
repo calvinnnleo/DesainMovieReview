@@ -8,11 +8,19 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import kotlin.text.format
+import java.util.Locale
 
 class MovieListAdapter(
-    private val movies: List<MovieItem>,
+    private var movies: MutableList<MovieItem>,
     private val listener: (MovieItem) -> Unit
 ) : RecyclerView.Adapter<MovieListAdapter.MovieViewHolder>() {
+
+    fun updateMovies(newMovies: List<MovieItem>) {
+        movies.clear()
+        movies.addAll(newMovies)
+        notifyDataSetChanged()
+    }
 
     class MovieViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val posterImageView: ImageView = itemView.findViewById(R.id.movie_poster)
@@ -21,18 +29,19 @@ class MovieListAdapter(
 
         fun bind(movie: MovieItem, listener: (MovieItem) -> Unit) {
             titleTextView.text = movie.title
-            descTextView.text = "Directed by: ${movie.directors} (${movie.year})"
-            
+
+            val ratingText = String.format(Locale.US, "%.1f", movie.rating ?: 0.0)
+            descTextView.text = "${movie.genres} | Rating: $ratingText"
+
             Glide.with(itemView.context)
                 .load(movie.primary_image_url)
-                .placeholder(R.drawable.ic_movie_list) 
-                .error(R.drawable.ic_movie_list) 
+                .placeholder(R.drawable.ic_movie_list)
+                .error(R.drawable.ic_movie_list)
                 .into(posterImageView)
 
             itemView.setOnClickListener {
-                // **FIX:** Add a guard clause to prevent navigation if movie_id is null.
                 if (movie.movie_id.isNullOrBlank()) {
-                    Toast.makeText(itemView.context, "Error: Cannot open forum for this movie.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(itemView.context, "Cannot open forum for this movie.", Toast.LENGTH_SHORT).show()
                 } else {
                     listener(movie)
                 }

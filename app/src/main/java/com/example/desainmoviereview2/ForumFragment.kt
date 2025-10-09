@@ -10,10 +10,12 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
+import com.bumptech.glide.request.RequestOptions
 import com.example.desainmoviereview2.databinding.FragmentForumBinding
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import com.google.firebase.database.ServerValue
+import jp.wasabeef.glide.transformations.BlurTransformation
 
 class ForumFragment : Fragment() {
 
@@ -86,7 +88,15 @@ class ForumFragment : Fragment() {
             binding.movieTitle.text = it.title
             binding.movieDescription.text = it.overview
             binding.movieRatingBar.rating = it.rating?.toFloat() ?: 0f
-            Glide.with(this).load(it.primary_image_url).into(binding.moviePoster)
+            Glide.with(this)
+                .load(it.primary_image_url)
+                .placeholder(R.drawable.ic_movie_list)
+                .fitCenter()
+                .into(binding.moviePoster)
+            Glide.with(this)
+                .load(it.primary_image_url)
+                .apply(RequestOptions.bitmapTransform(BlurTransformation(25, 3))) // 25 is radius, 3 is sampling
+                .into(binding.bgMoviePoster)
         }
     }
 

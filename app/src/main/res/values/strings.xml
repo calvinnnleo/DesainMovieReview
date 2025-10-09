@@ -5,4 +5,10 @@
     <string name="text_banner_sementara">Haru Urara</string>
     <string name="search_bar_hint">Search here...</string>
     <string name="recommendation">Recommendation</string>
+
+    <string-array name="sort_by_options">
+        <item>Ranking</item>
+        <item>Rating</item>
+        <item>Release Date</item>
+    </string-array>
 </resources>
