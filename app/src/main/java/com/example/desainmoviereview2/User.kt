@@ -2,6 +2,9 @@ package com.example.desainmoviereview2
 
 import com.google.firebase.database.IgnoreExtraProperties
 
+/**
+ * Data class for a user.
+ */
 @IgnoreExtraProperties
 data class User(
     val uid: String = "",

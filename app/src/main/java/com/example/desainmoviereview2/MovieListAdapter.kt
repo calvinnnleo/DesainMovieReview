@@ -10,17 +10,26 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import java.util.Locale
 
+/**
+ * Adapter for the movie list RecyclerView.
+ */
 class MovieListAdapter(
     private var movies: MutableList<MovieItem>,
     private val listener: (MovieItem) -> Unit
 ) : RecyclerView.Adapter<MovieListAdapter.MovieViewHolder>() {
 
+    /**
+     * Updates the list of movies and notifies the adapter of the data change.
+     */
     fun updateMovies(newMovies: List<MovieItem>) {
         movies.clear()
         movies.addAll(newMovies)
         notifyDataSetChanged()
     }
 
+    /**
+     * ViewHolder for a single movie item.
+     */
     class MovieViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val posterImageView: ImageView = itemView.findViewById(R.id.movie_poster)
         private val titleTextView: TextView = itemView.findViewById(R.id.movie_title)
@@ -29,6 +38,9 @@ class MovieListAdapter(
         private val directorTextView: TextView = itemView.findViewById(R.id.movie_director)
         private val writersTextView: TextView = itemView.findViewById(R.id.movie_writers)
 
+        /**
+         * Binds the movie data to the views.
+         */
         fun bind(movie: MovieItem, listener: (MovieItem) -> Unit) {
             titleTextView.text = movie.title
             descTextView.text = movie.genres ?: ""
@@ -39,6 +51,7 @@ class MovieListAdapter(
 
             detailsTextView.text = "$yearText | $runtimeText | Rating: $ratingText"
 
+            // Handle cases where the director and writer are the same person
             if (movie.directors == movie.writers) {
                 if (movie.directors != null) {
                     directorTextView.text = "Director & Writer: ${movie.directors}"
@@ -63,12 +76,14 @@ class MovieListAdapter(
                 }
             }
 
+            // Load the movie poster using Glide
             Glide.with(itemView.context)
                 .load(movie.primary_image_url)
                 .placeholder(R.drawable.ic_movie_list)
                 .error(R.drawable.ic_movie_list)
                 .into(posterImageView)
 
+            // Set a click listener for the movie item
             itemView.setOnClickListener {
                 if (movie.movie_id.isNullOrBlank()) {
                     Toast.makeText(itemView.context, "Cannot open forum for this movie.", Toast.LENGTH_SHORT).show()

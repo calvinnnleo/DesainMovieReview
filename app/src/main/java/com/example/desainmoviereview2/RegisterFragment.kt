@@ -14,6 +14,9 @@ import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 
+/**
+ * Fragment for user registration.
+ */
 class RegisterFragment : Fragment() {
 
     private var _binding: FragmentRegisterBinding? = null
@@ -43,6 +46,9 @@ class RegisterFragment : Fragment() {
         }
     }
 
+    /**
+     * Registers a new user.
+     */
     private fun registerUser() {
         val fullName = binding.editTextFullName.text.toString().trim()
         val username = binding.editTextUsername.text.toString().trim()
@@ -109,6 +115,9 @@ class RegisterFragment : Fragment() {
             }
     }
 
+    /**
+     * Shows an error message in a Snackbar.
+     */
     private fun showErrorSnackbar(message: String) {
         val snackbar = Snackbar.make(binding.root, message, Snackbar.LENGTH_LONG)
         val snackbarView = snackbar.view
@@ -131,6 +140,9 @@ class RegisterFragment : Fragment() {
         snackbar.show()
     }
 
+    /**
+     * Shows a success message in a Snackbar.
+     */
     private fun showSuccessSnackbar(message: String) {
         val snackbar = Snackbar.make(binding.root, message, Snackbar.LENGTH_SHORT)
         val snackbarView = snackbar.view

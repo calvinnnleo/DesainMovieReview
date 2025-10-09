@@ -4,6 +4,9 @@ import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
 import kotlinx.parcelize.RawValue
 
+/**
+ * Data class for a forum post.
+ */
 @Parcelize
 data class ForumPost(
     val post_id: String? = null,

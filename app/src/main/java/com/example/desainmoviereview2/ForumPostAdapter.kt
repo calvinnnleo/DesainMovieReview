@@ -16,6 +16,9 @@ import com.bumptech.glide.Glide
 import java.text.SimpleDateFormat
 import java.util.*
 
+/**
+ * Adapter for the forum post RecyclerView.
+ */
 class ForumPostAdapter(
     private val posts: List<ForumPost>,
     private val onReplySubmit: (post: ForumPost, replyContent: String) -> Unit
@@ -32,6 +35,9 @@ class ForumPostAdapter(
 
     override fun getItemCount(): Int = posts.size
 
+    /**
+     * ViewHolder for a single forum post.
+     */
     class PostViewHolder(
         itemView: View,
         private val onReplySubmit: (post: ForumPost, replyContent: String) -> Unit
@@ -49,16 +55,21 @@ class ForumPostAdapter(
         private val commentsRecyclerView: RecyclerView = itemView.findViewById(R.id.comments_recycler_view)
         private val replyButton: Button = itemView.findViewById(R.id.reply_button)
 
+        /**
+         * Binds the forum post data to the views.
+         */
         fun bind(post: ForumPost) {
             authorName.text = post.author_username ?: "Anonymous"
             postContent.text = post.content
             postRating.rating = post.user_rating?.toFloat() ?: 0f
 
+            // Format and display the timestamp
             post.created_at?.let {
                 val sdf = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
                 postTimestamp.text = sdf.format(Date(it as Long))
             }
 
+            // Load the author's avatar using Glide
             if (post.author_avatar_base64.isNullOrBlank()) {
                 Glide.with(itemView.context)
                     .load(R.drawable.ic_anonymous)
@@ -79,15 +90,18 @@ class ForumPostAdapter(
                 }
             }
 
+            // Set a click listener for the reply button
             replyButton.setOnClickListener {
                 val isReplyLayoutVisible = replyLayout.visibility == View.VISIBLE
                 replyLayout.visibility = if (isReplyLayoutVisible) View.GONE else View.VISIBLE
             }
 
+            // Set a click listener for the cancel reply button
             cancelReplyButton.setOnClickListener {
                 replyLayout.visibility = View.GONE
             }
 
+            // Set a click listener for the submit reply button
             submitReplyButton.setOnClickListener {
                 val replyContent = replyEditText.text.toString().trim()
                 if (replyContent.isNotEmpty()) {
@@ -97,6 +111,7 @@ class ForumPostAdapter(
                 }
             }
 
+            // Set up the replies RecyclerView
             commentsRecyclerView.layoutManager = LinearLayoutManager(itemView.context)
             val repliesList = post.replies.values.toList()
 
@@ -107,6 +122,9 @@ class ForumPostAdapter(
     }
 }
 
+/**
+ * Adapter for the replies RecyclerView.
+ */
 class CommentAdapter(private val comments: List<Reply>) : RecyclerView.Adapter<CommentAdapter.CommentViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CommentViewHolder {
@@ -120,15 +138,22 @@ class CommentAdapter(private val comments: List<Reply>) : RecyclerView.Adapter<C
 
     override fun getItemCount(): Int = comments.size
 
+    /**
+     * ViewHolder for a single reply.
+     */
     class CommentViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val textViewAuthor: TextView = itemView.findViewById(R.id.textViewAuthor)
         private val textViewComment: TextView = itemView.findViewById(R.id.textViewComment)
         private val profilePicture: ImageView = itemView.findViewById(R.id.profile_picture)
 
+        /**
+         * Binds the reply data to the views.
+         */
         fun bind(comment: Reply) {
             textViewAuthor.text = comment.author_username ?: "Anonymous"
             textViewComment.text = comment.content
 
+            // Load the author's avatar using Glide
             if (comment.author_avatar_base64.isNullOrBlank()) {
                 Glide.with(itemView.context)
                     .load(R.drawable.ic_anonymous)

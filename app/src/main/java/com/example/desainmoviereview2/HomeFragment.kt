@@ -17,6 +17,9 @@ import com.example.desainmoviereview2.databinding.FragmentHomeBinding
 import com.google.firebase.database.*
 import java.util.Calendar
 
+/**
+ * Fragment for the home screen.
+ */
 class HomeFragment : Fragment() {
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var homeBannerAdapter: HomeBannerAdapter
@@ -50,6 +53,9 @@ class HomeFragment : Fragment() {
         setupSearchView()
     }
 
+    /**
+     * Sets up the search view.
+     */
     private fun setupSearchView() {
         binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
@@ -65,6 +71,9 @@ class HomeFragment : Fragment() {
         })
     }
 
+    /**
+     * Searches for a movie in the database.
+     */
     private fun searchMovie(title: String) {
         val moviesRef = database.child("movies")
         moviesRef.orderByChild("title").equalTo(title).limitToFirst(1).addListenerForSingleValueEvent(object : ValueEventListener {
@@ -90,6 +99,9 @@ class HomeFragment : Fragment() {
         })
     }
 
+    /**
+     * Sets up the RecyclerViews for the banner and movie list.
+     */
     private fun setupRecyclerViews() {
         // Initializes the adapter for the ViewPager2 (banner).
         homeBannerAdapter = HomeBannerAdapter { movie ->
@@ -110,6 +122,9 @@ class HomeFragment : Fragment() {
         binding.movieList.setHasFixedSize(true)
     }
 
+    /**
+     * Fetches the movies from the database.
+     */
     private fun fetchMovies() {
         val moviesRef = database.child("movies")
         moviesRef.addValueEventListener(object : ValueEventListener {
@@ -153,11 +168,17 @@ class HomeFragment : Fragment() {
         })
     }
 
+    /**
+     * Opens the forum page for the selected movie.
+     */
     private fun openForumPage(movie: MovieItem) {
         val bundle = bundleOf("movieItem" to movie)
         findNavController().navigate(R.id.action_global_forumFragment, bundle)
     }
 
+    /**
+     * Sets up the auto-sliding banner.
+     */
     private fun setupAutoSlide() {
         if (homeBannerAdapter.itemCount == 0) return
 
@@ -200,6 +221,9 @@ class HomeFragment : Fragment() {
         startAutoSlideLogic()
     }
 
+    /**
+     * Starts the auto-sliding banner.
+     */
     private fun startAutoSlideLogic() { // Parameter removed
         autoSlideRunnable?.let { runnable ->
             handler.removeCallbacks(runnable)
@@ -207,6 +231,9 @@ class HomeFragment : Fragment() {
         }
     }
 
+    /**
+     * Stops the auto-sliding banner.
+     */
     private fun stopAutoSlideLogic() {
         autoSlideRunnable?.let { handler.removeCallbacks(it) }
     }

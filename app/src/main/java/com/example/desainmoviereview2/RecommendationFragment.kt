@@ -19,6 +19,9 @@ import com.google.firebase.database.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
+/**
+ * Fragment for displaying movie recommendations.
+ */
 class RecommendationFragment : Fragment() {
 
     private var _binding: FragmentRecommendationBinding? = null
@@ -46,6 +49,9 @@ class RecommendationFragment : Fragment() {
         loadRecommendations()
     }
 
+    /**
+     * Sets up the RecyclerView for the recommendation list.
+     */
     private fun setupRecyclerView() {
         recommendationAdapter = MovieListAdapter(mutableListOf()) { movie ->
             val bundle = bundleOf("movieItem" to movie)
@@ -57,6 +63,9 @@ class RecommendationFragment : Fragment() {
         }
     }
 
+    /**
+     * Loads the details of the movie that was searched for.
+     */
     private fun loadSearchedMovie() {
         val imdbID = args.imdbID
         val movieRef = database.child("movies").child(imdbID)
@@ -79,6 +88,9 @@ class RecommendationFragment : Fragment() {
         })
     }
 
+    /**
+     * Loads the movie recommendations from the API.
+     */
     private fun loadRecommendations() {
         val imdbID = args.imdbID
         lifecycleScope.launch {
@@ -97,6 +109,9 @@ class RecommendationFragment : Fragment() {
         }
     }
 
+    /**
+     * Fetches the full movie details for the recommended movies.
+     */
     private fun fetchMoviesByTitles(titles: List<String>) {
         val moviesRef = database.child("movies")
         val recommendedMovies = mutableListOf<MovieItem>()

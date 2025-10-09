@@ -12,6 +12,9 @@ import com.example.desainmoviereview2.databinding.FragmentLoginBinding
 import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
 
+/**
+ * Fragment for user login.
+ */
 class LoginFragment : Fragment() {
 
     private var _binding: FragmentLoginBinding? = null
@@ -41,6 +44,9 @@ class LoginFragment : Fragment() {
         }
     }
 
+    /**
+     * Logs in the user with the provided email and password.
+     */
     private fun loginUser() {
         val email = binding.editTextEmail.text.toString().trim()
         val password = binding.editTextPassword.text.toString().trim()
@@ -81,6 +87,9 @@ class LoginFragment : Fragment() {
             }
     }
 
+    /**
+     * Shows an error message in a Snackbar.
+     */
     private fun showErrorSnackbar(message: String) {
         val snackbar = Snackbar.make(binding.root, message, Snackbar.LENGTH_LONG)
         val snackbarView = snackbar.view

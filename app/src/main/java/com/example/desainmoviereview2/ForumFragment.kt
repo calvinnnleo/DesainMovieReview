@@ -17,6 +17,9 @@ import com.google.firebase.database.*
 import com.google.firebase.database.ServerValue
 import jp.wasabeef.glide.transformations.BlurTransformation
 
+/**
+ * Fragment for displaying the movie details and forum.
+ */
 class ForumFragment : Fragment() {
 
     private var _binding: FragmentForumBinding? = null
@@ -47,6 +50,7 @@ class ForumFragment : Fragment() {
 
         movieItem = arguments?.getParcelable("movieItem")
 
+        // If the movie item is null, navigate back to the previous screen
         if (movieItem == null || movieItem?.movie_id.isNullOrBlank()) {
             Toast.makeText(context, "Error: Movie data is missing.", Toast.LENGTH_LONG).show()
             findNavController().navigateUp()
@@ -69,6 +73,9 @@ class ForumFragment : Fragment() {
         fetchForumPosts()
     }
 
+    /**
+     * Sets up the authentication state listener to show/hide the add review button.
+     */
     private fun setupAuthStateListener() {
         authStateListener = FirebaseAuth.AuthStateListener { firebaseAuth ->
             val user = firebaseAuth.currentUser
@@ -83,11 +90,16 @@ class ForumFragment : Fragment() {
         }
     }
 
+    /**
+     * Sets up the UI with the movie details.
+     */
     private fun setupUI() {
         movieItem?.let {
             binding.movieTitle.text = it.title
             binding.movieDescription.text = it.overview
             binding.movieRatingBar.rating = (it.rating?.toFloat() ?: 0f) / 2f
+
+            // Load the movie poster and a blurred background image
             Glide.with(this)
                 .load(it.primary_image_url)
                 .placeholder(R.drawable.ic_movie_list)
@@ -100,6 +112,9 @@ class ForumFragment : Fragment() {
         }
     }
 
+    /**
+     * Sets up the RecyclerView for the forum posts.
+     */
     private fun setupRecyclerView() {
         forumAdapter = ForumPostAdapter(posts) { post, replyContent ->
             submitReplyToPost(post, replyContent)
@@ -108,6 +123,9 @@ class ForumFragment : Fragment() {
         binding.forumRecyclerView.adapter = forumAdapter
     }
 
+    /**
+     * Sets up the click listeners for the add review button and submit button.
+     */
     private fun setupClickListeners() {
 
         binding.addReviewFab.setOnClickListener {
@@ -120,6 +138,9 @@ class ForumFragment : Fragment() {
         }
     }
 
+    /**
+     * Fetches the forum posts for the current movie.
+     */
     private fun fetchForumPosts() {
         val currentMovieId = movieItem?.movie_id ?: return
         query = forumPostsRef.orderByChild("movie_id").equalTo(currentMovieId)
@@ -146,6 +167,9 @@ class ForumFragment : Fragment() {
         query?.addValueEventListener(valueEventListener!!)
     }
 
+    /**
+     * Submits a new post to the forum.
+     */
     private fun submitNewPost() {
         val user = auth.currentUser ?: return
 
@@ -191,6 +215,9 @@ class ForumFragment : Fragment() {
         }
     }
 
+    /**
+     * Submits a reply to a forum post.
+     */
     fun submitReplyToPost(post: ForumPost, replyContent: String) {
         val user = auth.currentUser ?: return
         val parentPostId = post.post_id ?: return

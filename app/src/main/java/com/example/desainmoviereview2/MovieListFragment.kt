@@ -14,6 +14,9 @@ import com.example.desainmoviereview2.databinding.FragmentMovieListBinding
 import com.google.android.material.chip.Chip
 import com.google.firebase.database.*
 
+/**
+ * Fragment for displaying a list of movies.
+ */
 class MovieListFragment : Fragment() {
 
     private var _binding: FragmentMovieListBinding? = null
@@ -56,6 +59,9 @@ class MovieListFragment : Fragment() {
         fetchMoviesFromDatabase()
     }
 
+    /**
+     * Sets up the RecyclerView for the movie list.
+     */
     private fun setupRecyclerView() {
         movieListAdapter = MovieListAdapter(mutableListOf()) { movie ->
             val bundle = bundleOf("movieItem" to movie)
@@ -65,6 +71,9 @@ class MovieListFragment : Fragment() {
         binding.recyclerView.adapter = movieListAdapter
     }
 
+    /**
+     * Sets up the filter menu.
+     */
     private fun setupFilterMenu() {
         binding.filterButton.setOnClickListener { view ->
             val popupMenu = PopupMenu(requireContext(), view)
@@ -79,6 +88,9 @@ class MovieListFragment : Fragment() {
         }
     }
 
+    /**
+     * Sets up the filter chips for genres.
+     */
     private fun setupFilterChips() {
         // Clear any chips that might exist from the XML layout (good practice)
         binding.filterChipGroup.removeAllViews()
@@ -109,6 +121,9 @@ class MovieListFragment : Fragment() {
         }
     }
 
+    /**
+     * Fetches the movies from the database.
+     */
     private fun fetchMoviesFromDatabase() {
         val moviesRef = database.child("movies")
 
@@ -133,6 +148,9 @@ class MovieListFragment : Fragment() {
         moviesRef.addValueEventListener(movieListener!!)
     }
 
+    /**
+     * Applies the current filters and sorting to the movie list.
+     */
     private fun applyFiltersAndSorting() {
         // 1. Filter the list by genre
         val filteredList = if (currentGenreFilter == "All") {
