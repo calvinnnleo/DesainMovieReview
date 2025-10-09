@@ -1,6 +1,7 @@
 package com.example.desainmoviereview2
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,6 +12,11 @@ import androidx.navigation.fragment.findNavController
 import com.example.desainmoviereview2.databinding.FragmentLoginBinding
 import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
+import com.google.firebase.messaging.FirebaseMessaging
 
 /**
  * Fragment for user login.
@@ -67,6 +73,29 @@ class LoginFragment : Fragment() {
                 binding.buttonLogin.text = "Login"
 
                 if (task.isSuccessful) {
+                    val firebaseUser = task.result.user
+                    val uid = firebaseUser?.uid
+                    if (uid != null) {
+                        val userRef = FirebaseDatabase.getInstance("https://movie-recommendation-b7ce0-default-rtdb.asia-southeast1.firebasedatabase.app").getReference("users").child(uid)
+                        userRef.addListenerForSingleValueEvent(object : ValueEventListener {
+                            override fun onDataChange(snapshot: DataSnapshot) {
+                                val user = snapshot.getValue(User::class.java)
+                                if (user != null && user.fcmToken.isEmpty()) {
+                                    FirebaseMessaging.getInstance().token.addOnCompleteListener { tokenTask ->
+                                        if (tokenTask.isSuccessful) {
+                                            val fcmToken = tokenTask.result
+                                            userRef.child("fcmToken").setValue(fcmToken)
+                                        }
+                                    }
+                                }
+                            }
+
+                            override fun onCancelled(error: DatabaseError) {
+                                Log.e("LoginFragment", "Database error", error.toException())
+                            }
+                        })
+                    }
+
                     // Navigate to home
                     findNavController().navigate(R.id.action_loginFragment_to_homeFragment)
                 } else {

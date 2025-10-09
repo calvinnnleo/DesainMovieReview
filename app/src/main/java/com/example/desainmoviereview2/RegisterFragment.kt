@@ -13,6 +13,7 @@ import com.example.desainmoviereview2.databinding.FragmentRegisterBinding
 import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.messaging.FirebaseMessaging
 
 /**
  * Fragment for user registration.
@@ -73,25 +74,34 @@ class RegisterFragment : Fragment() {
                     val firebaseUser = task.result.user
                     val uid = firebaseUser?.uid
                     if (uid != null) {
-                        val user = User(
-                            uid = uid,
-                            username = username,
-                            email = email,
-                            joinedDate = System.currentTimeMillis(),
-                            fullName = fullName,
-                            avatarBase64 = ""
-                        )
-                        val database = FirebaseDatabase.getInstance("https://movie-recommendation-b7ce0-default-rtdb.asia-southeast1.firebasedatabase.app").getReference("users")
-                        database.child(uid).setValue(user).addOnCompleteListener { dbTask ->
-                            if (dbTask.isSuccessful) {
-                                showSuccessSnackbar("Registration successful! ✓")
-                                // Delay navigation to show success message
-                                binding.root.postDelayed({
-                                    findNavController().navigate(R.id.action_registerFragment_to_homeFragment)
-                                }, 1000)
+                        FirebaseMessaging.getInstance().token.addOnCompleteListener { tokenTask ->
+                            val fcmToken = if (tokenTask.isSuccessful) {
+                                tokenTask.result
                             } else {
-                                Log.e("RegisterFragment", "Database error", dbTask.exception)
-                                showErrorSnackbar("Database error: ${dbTask.exception?.message}")
+                                ""
+                            }
+
+                            val user = User(
+                                uid = uid,
+                                username = username,
+                                email = email,
+                                joinedDate = System.currentTimeMillis(),
+                                fullName = fullName,
+                                avatarBase64 = "",
+                                fcmToken = fcmToken
+                            )
+                            val database = FirebaseDatabase.getInstance("https://movie-recommendation-b7ce0-default-rtdb.asia-southeast1.firebasedatabase.app").getReference("users")
+                            database.child(uid).setValue(user).addOnCompleteListener { dbTask ->
+                                if (dbTask.isSuccessful) {
+                                    showSuccessSnackbar("Registration successful! ✓")
+                                    // Delay navigation to show success message
+                                    binding.root.postDelayed({
+                                        findNavController().navigate(R.id.action_registerFragment_to_homeFragment)
+                                    }, 1000)
+                                } else {
+                                    Log.e("RegisterFragment", "Database error", dbTask.exception)
+                                    showErrorSnackbar("Database error: ${dbTask.exception?.message}")
+                                }
                             }
                         }
                     } else {

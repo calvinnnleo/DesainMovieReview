@@ -12,5 +12,6 @@ data class User(
     val email: String = "",
     val joinedDate: Long = 0L,
     val fullName: String = "",
-    val avatarBase64: String = ""
+    val avatarBase64: String = "",
+    val fcmToken: String = ""
 )
