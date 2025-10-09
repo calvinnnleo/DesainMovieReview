@@ -5,13 +5,14 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
+import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.example.desainmoviereview2.databinding.FragmentForumBinding
+import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import com.google.firebase.database.ServerValue
@@ -52,7 +53,7 @@ class ForumFragment : Fragment() {
 
         // If the movie item is null, navigate back to the previous screen
         if (movieItem == null || movieItem?.movie_id.isNullOrBlank()) {
-            Toast.makeText(context, "Error: Movie data is missing.", Toast.LENGTH_LONG).show()
+            showSnackbar("Error: Movie data is missing.", Snackbar.LENGTH_LONG)
             findNavController().navigateUp()
             return
         }
@@ -177,7 +178,7 @@ class ForumFragment : Fragment() {
         val content = binding.newPostEditText.text.toString().trim()
 
         if (content.isEmpty()) {
-            Toast.makeText(context, "Content cannot be empty", Toast.LENGTH_SHORT).show()
+            showSnackbar("Content cannot be empty")
             return
         }
 
@@ -201,17 +202,17 @@ class ForumFragment : Fragment() {
             )
 
             newPostRef.setValue(postMap).addOnSuccessListener {
-                Toast.makeText(requireContext(), "Post submitted!", Toast.LENGTH_SHORT).show()
+                showSnackbar("Post submitted!")
                 binding.newPostEditText.text.clear()
                 binding.ratingBar.rating = 0f
                 binding.addReviewLayout.visibility = View.GONE
                 binding.addReviewFab.visibility = View.VISIBLE
             }.addOnFailureListener { e ->
-                Toast.makeText(requireContext(), "Failed to submit post: ${e.message}", Toast.LENGTH_SHORT).show()
+                showSnackbar("Failed to submit post: ${e.message}")
             }
 
         }.addOnFailureListener { e ->
-            Toast.makeText(requireContext(), "Could not get user data: ${e.message}", Toast.LENGTH_SHORT).show()
+            showSnackbar("Could not get user data: ${e.message}")
         }
     }
 
@@ -223,7 +224,7 @@ class ForumFragment : Fragment() {
         val parentPostId = post.post_id ?: return
 
         if (replyContent.isEmpty()) {
-            Toast.makeText(requireContext(), "Reply cannot be empty.", Toast.LENGTH_SHORT).show()
+            showSnackbar("Reply cannot be empty.")
             return
         }
 
@@ -248,13 +249,23 @@ class ForumFragment : Fragment() {
 
             newReplyRef.setValue(replyMap)
                 .addOnSuccessListener {
-                    Toast.makeText(requireContext(), "Reply submitted!", Toast.LENGTH_SHORT).show()
+                    showSnackbar("Reply submitted!")
                 }
                 .addOnFailureListener { e ->
-                    Toast.makeText(requireContext(), "Failed to submit reply: ${e.message}", Toast.LENGTH_SHORT).show()
+                    showSnackbar("Failed to submit reply: ${e.message}")
                 }
         }.addOnFailureListener { e ->
-            Toast.makeText(requireContext(), "Could not get user data: ${e.message}", Toast.LENGTH_SHORT).show()
+            showSnackbar("Could not get user data: ${e.message}")
+        }
+    }
+
+    private fun showSnackbar(message: String, duration: Int = Snackbar.LENGTH_SHORT) {
+        view?.let {
+            val snackbar = Snackbar.make(it, message, duration)
+            snackbar.view.setBackgroundColor(it.context.getColor(android.R.color.white))
+            val textView = snackbar.view.findViewById<TextView>(com.google.android.material.R.id.snackbar_text)
+            textView.setTextColor(it.context.getColor(android.R.color.black))
+            snackbar.show()
         }
     }
 

@@ -5,11 +5,11 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
-import android.widget.Toast
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.google.android.material.snackbar.Snackbar
 
 class HomeListAdapter(
     private val listener: (MovieItem) -> Unit
@@ -31,7 +31,11 @@ class HomeListAdapter(
             itemView.setOnClickListener {
                 // **FIX:** Add a guard clause to prevent navigation if movie_id is null.
                 if (movie.movie_id.isNullOrBlank()) {
-                    Toast.makeText(itemView.context, "Error: Cannot open forum for this movie.", Toast.LENGTH_SHORT).show()
+                    val snackbar = Snackbar.make(itemView, "Error: Cannot open forum for this movie.", Snackbar.LENGTH_SHORT)
+                    snackbar.view.setBackgroundColor(itemView.context.getColor(android.R.color.white))
+                    val textView = snackbar.view.findViewById<TextView>(com.google.android.material.R.id.snackbar_text)
+                    textView.setTextColor(itemView.context.getColor(android.R.color.black))
+                    snackbar.show()
                 } else {
                     listener(movie)
                 }

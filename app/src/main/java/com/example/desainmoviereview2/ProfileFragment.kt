@@ -15,7 +15,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
+import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.FileProvider
@@ -23,6 +23,7 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
 import com.example.desainmoviereview2.databinding.FragmentProfileBinding
+import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -99,10 +100,7 @@ class ProfileFragment : Fragment() {
 
         binding.buttonLogout.setOnClickListener {
             auth.signOut()
-            val intent = Intent(requireActivity(), MainActivity::class.java)
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-            startActivity(intent)
-            requireActivity().finish()
+            findNavController().navigate(R.id.loginFragment)
         }
     }
 
@@ -175,7 +173,7 @@ class ProfileFragment : Fragment() {
             } else {
                 binding.progressBar.visibility = View.GONE
                 binding.buttonSaveProfile.isEnabled = true
-                Toast.makeText(requireContext(), "Failed to encode image.", Toast.LENGTH_SHORT).show()
+                showSnackbar("Failed to encode image.")
             }
         } else {
             if (updates.isNotEmpty()) {
@@ -213,7 +211,7 @@ class ProfileFragment : Fragment() {
             if (updates.isNotEmpty()) {
                 updateUserContributions(userId, updates) {
                     if (_binding != null) {
-                        Toast.makeText(requireContext(), "Profile and all contributions updated successfully", Toast.LENGTH_SHORT).show()
+                        showSnackbar("Profile and all contributions updated successfully")
                         binding.progressBar.visibility = View.GONE
                         binding.buttonSaveProfile.isEnabled = false
                         loadUserProfile() // Reload to show new PFP
@@ -229,7 +227,7 @@ class ProfileFragment : Fragment() {
             if (_binding == null) return@addOnFailureListener
             binding.progressBar.visibility = View.GONE
             binding.buttonSaveProfile.isEnabled = true
-            Toast.makeText(requireContext(), "Error updating profile: ${e.message}", Toast.LENGTH_SHORT).show()
+            showSnackbar("Error updating profile: ${e.message}")
             Log.w("ProfileFragment", "Error updating document", e)
         }
     }
@@ -275,7 +273,7 @@ class ProfileFragment : Fragment() {
                 if (_binding != null) {
                     binding.progressBar.visibility = View.GONE
                     binding.buttonSaveProfile.isEnabled = true
-                    Toast.makeText(requireContext(), "Failed to update contributions: ${error.message}", Toast.LENGTH_SHORT).show()
+                    showSnackbar("Failed to update contributions: ${error.message}")
                 }
             }
         })
@@ -313,6 +311,16 @@ class ProfileFragment : Fragment() {
             binding.buttonSaveProfile.isEnabled = false
         }.addOnFailureListener{
             Log.e("ProfileFragment", "Error getting data", it)
+        }
+    }
+
+    private fun showSnackbar(message: String, duration: Int = Snackbar.LENGTH_SHORT) {
+        view?.let {
+            val snackbar = Snackbar.make(it, message, duration)
+            snackbar.view.setBackgroundColor(it.context.getColor(android.R.color.white))
+            val textView = snackbar.view.findViewById<TextView>(com.google.android.material.R.id.snackbar_text)
+            textView.setTextColor(it.context.getColor(android.R.color.black))
+            snackbar.show()
         }
     }
 

@@ -5,9 +5,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
-import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.google.android.material.snackbar.Snackbar
 import java.util.Locale
 
 /**
@@ -86,7 +86,11 @@ class MovieListAdapter(
             // Set a click listener for the movie item
             itemView.setOnClickListener {
                 if (movie.movie_id.isNullOrBlank()) {
-                    Toast.makeText(itemView.context, "Cannot open forum for this movie.", Toast.LENGTH_SHORT).show()
+                    val snackbar = Snackbar.make(itemView, "Cannot open forum for this movie.", Snackbar.LENGTH_SHORT)
+                    snackbar.view.setBackgroundColor(itemView.context.getColor(android.R.color.white))
+                    val textView = snackbar.view.findViewById<TextView>(com.google.android.material.R.id.snackbar_text)
+                    textView.setTextColor(itemView.context.getColor(android.R.color.black))
+                    snackbar.show()
                 } else {
                     listener(movie)
                 }
