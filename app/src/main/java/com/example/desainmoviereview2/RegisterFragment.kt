@@ -1,15 +1,16 @@
 package com.example.desainmoviereview2
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.example.desainmoviereview2.databinding.FragmentRegisterBinding
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
 
 class RegisterFragment : Fragment() {
 
@@ -41,10 +42,12 @@ class RegisterFragment : Fragment() {
     }
 
     private fun registerUser() {
+        val fullName = binding.editTextFullName.text.toString().trim()
+        val username = binding.editTextUsername.text.toString().trim()
         val email = binding.editTextEmail.text.toString().trim()
         val password = binding.editTextPassword.text.toString().trim()
 
-        if (email.isEmpty() || password.isEmpty()) {
+        if (fullName.isEmpty() || username.isEmpty() || email.isEmpty() || password.isEmpty()) {
             Toast.makeText(context, "Please fill all fields", Toast.LENGTH_SHORT).show()
             return
         }
@@ -52,14 +55,31 @@ class RegisterFragment : Fragment() {
         auth.createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener(requireActivity()) { task ->
                 if (task.isSuccessful) {
-                    val uid = task.result.user?.uid
+                    val firebaseUser = task.result.user
+                    val uid = firebaseUser?.uid
                     if (uid != null) {
-                        val bundle = bundleOf("uid" to uid, "email" to email)
-                        findNavController().navigate(R.id.action_registerFragment_to_completeProfileFragment, bundle)
+                        val user = User(
+                            uid = uid,
+                            username = username,
+                            email = email,
+                            joinedDate = System.currentTimeMillis(),
+                            fullName = fullName,
+                            avatarUrl = ""
+                        )
+                        val database = FirebaseDatabase.getInstance("https://movie-recommendation-b7ce0-default-rtdb.asia-southeast1.firebasedatabase.app").getReference("users")
+                        database.child(uid).setValue(user).addOnCompleteListener { dbTask ->
+                            if (dbTask.isSuccessful) {
+                                findNavController().navigate(R.id.action_registerFragment_to_homeFragment)
+                            } else {
+                                Log.e("RegisterFragment", "Database error", dbTask.exception)
+                                Toast.makeText(context, "Database error: ${dbTask.exception?.message}", Toast.LENGTH_LONG).show()
+                            }
+                        }
                     } else {
                         Toast.makeText(context, "Registration failed: Could not get user ID.", Toast.LENGTH_SHORT).show()
                     }
                 } else {
+                    Log.e("RegisterFragment", "Registration failed", task.exception)
                     Toast.makeText(context, "Registration failed: ${task.exception?.message}", Toast.LENGTH_LONG).show()
                 }
             }

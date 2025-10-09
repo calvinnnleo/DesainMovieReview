@@ -1,6 +1,5 @@
 package com.example.desainmoviereview2
 
-import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -10,12 +9,11 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import com.example.desainmoviereview2.databinding.FragmentProfileBinding
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
-
-import com.example.desainmoviereview2.User
 
 class ProfileFragment : Fragment() {
 
@@ -25,7 +23,7 @@ class ProfileFragment : Fragment() {
     private lateinit var auth: FirebaseAuth
     private lateinit var database: DatabaseReference
 
-    private var originalUsername: String? = null // Renamed from originalNickname
+    private var originalUsername: String? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -57,9 +55,7 @@ class ProfileFragment : Fragment() {
 
         binding.buttonLogout.setOnClickListener {
             auth.signOut()
-            val intent = Intent(requireActivity(), AuthActivity::class.java)
-            startActivity(intent)
-            requireActivity().finish()
+            findNavController().navigate(R.id.action_profileFragment_to_loginFragment)
         }
     }
 
@@ -67,6 +63,7 @@ class ProfileFragment : Fragment() {
         val firebaseUser = auth.currentUser
         if (firebaseUser == null) {
             Log.e("ProfileFragment", "User is not logged in.")
+            findNavController().navigate(R.id.action_profileFragment_to_loginFragment)
             return
         }
 
@@ -74,11 +71,12 @@ class ProfileFragment : Fragment() {
         binding.textViewEmail.text = firebaseUser.email
 
         database.child(userId).get().addOnSuccessListener { dataSnapshot ->
+            if (_binding == null) return@addOnSuccessListener // View is destroyed
             if (dataSnapshot.exists()) {
                 val userProfile = dataSnapshot.getValue(User::class.java)
 
                 userProfile?.let {
-                    originalUsername = it.username // Changed from nickname
+                    originalUsername = it.username
                     binding.editTextUsername.setText(originalUsername)
                 }
                 binding.imageViewProfilePic.setImageResource(R.drawable.ic_profile)
@@ -98,33 +96,53 @@ class ProfileFragment : Fragment() {
             return
         }
 
-        val username = binding.editTextUsername.text.toString().trim() // Changed from nickname
-        if (username.isEmpty()) {
-            binding.editTextUsername.error = "Username cannot be empty" // Changed from nickname
+        val newUsername = binding.editTextUsername.text.toString().trim()
+        if (newUsername.isEmpty()) {
+            binding.editTextUsername.error = "Username cannot be empty"
             return
         }
 
         binding.editTextUsername.error = null
-
         binding.progressBar.visibility = View.VISIBLE
         binding.buttonSaveProfile.isEnabled = false
 
-        val userUpdates = mapOf<String, Any>(
-            "username" to username // Changed from nickname
-        )
+        // First, read the existing user data to get the complete object.
+        database.child(userId).get().addOnSuccessListener { dataSnapshot ->
+            if (dataSnapshot.exists()) {
+                val currentUser = dataSnapshot.getValue(User::class.java)
+                if (currentUser != null) {
+                    // Create a new user object with the updated username.
+                    val updatedUser = currentUser.copy(username = newUsername)
 
-        database.child(userId).updateChildren(userUpdates)
-            .addOnSuccessListener {
-                binding.progressBar.visibility = View.GONE
-                Toast.makeText(requireContext(), "Profile updated successfully", Toast.LENGTH_SHORT).show()
-                originalUsername = username // Changed from nickname
-            }
-            .addOnFailureListener { e ->
+                    // Write the entire updated object back to the database.
+                    database.child(userId).setValue(updatedUser)
+                        .addOnSuccessListener {
+                            if (_binding == null) return@addOnSuccessListener
+                            binding.progressBar.visibility = View.GONE
+                            Toast.makeText(requireContext(), "Profile updated successfully", Toast.LENGTH_SHORT).show()
+                            originalUsername = newUsername
+                            binding.buttonSaveProfile.isEnabled = false
+                        }
+                        .addOnFailureListener { e ->
+                            if (_binding == null) return@addOnFailureListener
+                            binding.progressBar.visibility = View.GONE
+                            binding.buttonSaveProfile.isEnabled = true
+                            Toast.makeText(requireContext(), "Error updating profile: ${e.message}", Toast.LENGTH_SHORT).show()
+                            Log.w("ProfileFragment", "Error updating document", e)
+                        }
+                }
+            } else {
+                 if (_binding == null) return@addOnSuccessListener
                 binding.progressBar.visibility = View.GONE
                 binding.buttonSaveProfile.isEnabled = true
-                Toast.makeText(requireContext(), "Error updating profile: ${e.message}", Toast.LENGTH_SHORT).show()
-                Log.w("ProfileFragment", "Error updating document", e)
+                Toast.makeText(requireContext(), "Could not find user data to update.", Toast.LENGTH_SHORT).show()
             }
+        }.addOnFailureListener {
+             if (_binding == null) return@addOnFailureListener
+            binding.progressBar.visibility = View.GONE
+            binding.buttonSaveProfile.isEnabled = true
+            Toast.makeText(requireContext(), "Failed to read user data: ${it.message}", Toast.LENGTH_SHORT).show()
+        }
     }
 
     override fun onDestroyView() {

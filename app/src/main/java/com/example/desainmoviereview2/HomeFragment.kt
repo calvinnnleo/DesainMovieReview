@@ -71,6 +71,10 @@ class HomeFragment : Fragment() {
         val moviesRef = database.child("movies")
         moviesRef.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
+                if (_binding == null) {
+                    return // View is destroyed, do not proceed
+                }
+
                 val newMovies = mutableListOf<MovieItem>()
                 val newBanners = mutableListOf<MovieItem>()
 
