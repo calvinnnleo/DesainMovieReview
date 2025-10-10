@@ -131,10 +131,8 @@ class MovieListFragment : Fragment() {
             override fun onDataChange(dataSnapshot: DataSnapshot) {
                 movieList.clear()
                 for (snapshot in dataSnapshot.children) {
-                    val movie = snapshot.getValue(MovieItem::class.java)
+                    val movie = parseMovie(snapshot)
                     if (movie != null) {
-                        // **FIX:** Manually set the movie_id from the snapshot's key
-                        movie.movie_id = snapshot.key
                         movieList.add(movie)
                     }
                 }
@@ -146,6 +144,33 @@ class MovieListFragment : Fragment() {
             }
         }
         moviesRef.addValueEventListener(movieListener!!)
+    }
+
+    private fun parseMovie(movieSnapshot: DataSnapshot): MovieItem? {
+        val movieMap = movieSnapshot.getValue(object : GenericTypeIndicator<Map<String, Any?>>() {})
+        return if (movieMap != null) {
+            val rating = (movieMap["rating"] as? Number)?.toDouble()
+            val numVotes = (movieMap["num_votes"] as? Number)?.toDouble()
+            val runtimeMinutes = (movieMap["runtime_minutes"] as? Number)?.toDouble()
+
+            MovieItem(
+                movie_id = movieSnapshot.key,
+                title = movieMap["title"] as? String,
+                year = movieMap["year"]?.toString(),
+                rating = rating,
+                num_votes = numVotes,
+                runtime_minutes = runtimeMinutes,
+                directors = movieMap["directors"] as? String,
+                writers = movieMap["writers"] as? String,
+                genres = movieMap["genres"] as? String,
+                overview = movieMap["overview"] as? String,
+                crew = movieMap["crew"] as? String,
+                primary_image_url = movieMap["primary_image_url"] as? String,
+                thumbnail_url = movieMap["thumbnail_url"] as? String
+            )
+        } else {
+            null
+        }
     }
 
     /**
@@ -168,7 +193,7 @@ class MovieListFragment : Fragment() {
                     .thenByDescending { it.rating }
             )
             "Rating" -> filteredList.sortedByDescending { it.rating }
-            "Newest" -> filteredList.sortedByDescending { it.year }
+            "Newest" -> filteredList.sortedByDescending { it.year?.toIntOrNull() }
             else -> filteredList.sortedByDescending { it.title }
         }
         movieListAdapter.updateMovies(sortedList)
