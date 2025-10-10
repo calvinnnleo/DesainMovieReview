@@ -72,7 +72,7 @@ class RecommendationFragment : Fragment() {
 
         movieRef.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                val movie = snapshot.getValue(MovieItem::class.java)
+                val movie = parseMovie(snapshot)
                 movie?.let {
                     binding.searchedMovieTitle.text = it.title
                     binding.searchedMovieOverview.text = it.overview
@@ -109,6 +109,33 @@ class RecommendationFragment : Fragment() {
         }
     }
 
+    private fun parseMovie(movieSnapshot: DataSnapshot): MovieItem? {
+        val movieMap = movieSnapshot.getValue(object : GenericTypeIndicator<Map<String, Any?>>() {})
+        return if (movieMap != null) {
+            val rating = (movieMap["rating"] as? Number)?.toDouble()
+            val numVotes = (movieMap["num_votes"] as? Number)?.toDouble()
+            val runtimeMinutes = (movieMap["runtime_minutes"] as? Number)?.toDouble()
+
+            MovieItem(
+                movie_id = movieSnapshot.key,
+                title = movieMap["title"] as? String,
+                year = movieMap["year"] as? String,
+                rating = rating,
+                num_votes = numVotes,
+                runtime_minutes = runtimeMinutes,
+                directors = movieMap["directors"] as? String,
+                writers = movieMap["writers"] as? String,
+                genres = movieMap["genres"] as? String,
+                overview = movieMap["overview"] as? String,
+                crew = movieMap["crew"] as? String,
+                primary_image_url = movieMap["primary_image_url"] as? String,
+                thumbnail_url = movieMap["thumbnail_url"] as? String
+            )
+        } else {
+            null
+        }
+    }
+
     /**
      * Fetches the full movie details for the recommended movies.
      */
@@ -121,9 +148,8 @@ class RecommendationFragment : Fragment() {
                 val snapshot = moviesRef.orderByChild("title").equalTo(title).limitToFirst(1).get().await()
                 if (snapshot.exists()) {
                     for (movieSnapshot in snapshot.children) {
-                        val movie = movieSnapshot.getValue(MovieItem::class.java)
+                        val movie = parseMovie(movieSnapshot)
                         if (movie != null) {
-                            movie.movie_id = movieSnapshot.key
                             recommendedMovies.add(movie)
                         }
                     }

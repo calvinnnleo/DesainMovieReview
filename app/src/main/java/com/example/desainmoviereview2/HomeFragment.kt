@@ -80,9 +80,8 @@ class HomeFragment : Fragment() {
             override fun onDataChange(snapshot: DataSnapshot) {
                 if (snapshot.exists()) {
                     for (movieSnapshot in snapshot.children) {
-                        val movie = movieSnapshot.getValue(MovieItem::class.java)
+                        val movie = parseMovie(movieSnapshot)
                         if (movie != null) {
-                            movie.movie_id = movieSnapshot.key
                             val bundle = bundleOf("imdbID" to movie.movie_id)
                             findNavController().navigate(R.id.action_homeFragment_to_recommendationFragment, bundle)
                         }
@@ -97,6 +96,33 @@ class HomeFragment : Fragment() {
                 Log.e("HomeFragment", "Failed to search for movie.", error.toException())
             }
         })
+    }
+
+    private fun parseMovie(movieSnapshot: DataSnapshot): MovieItem? {
+        val movieMap = movieSnapshot.getValue(object : GenericTypeIndicator<Map<String, Any?>>() {})
+        return if (movieMap != null) {
+            val rating = (movieMap["rating"] as? Number)?.toDouble()
+            val numVotes = (movieMap["num_votes"] as? Number)?.toDouble()
+            val runtimeMinutes = (movieMap["runtime_minutes"] as? Number)?.toDouble()
+
+            MovieItem(
+                movie_id = movieSnapshot.key,
+                title = movieMap["title"] as? String,
+                year = movieMap["year"]?.toString(),
+                rating = rating,
+                num_votes = numVotes,
+                runtime_minutes = runtimeMinutes,
+                directors = movieMap["directors"] as? String,
+                writers = movieMap["writers"] as? String,
+                genres = movieMap["genres"] as? String,
+                overview = movieMap["overview"] as? String,
+                crew = movieMap["crew"] as? String,
+                primary_image_url = movieMap["primary_image_url"] as? String,
+                thumbnail_url = movieMap["thumbnail_url"] as? String
+            )
+        } else {
+            null
+        }
     }
 
     /**
@@ -136,15 +162,14 @@ class HomeFragment : Fragment() {
                 val newMovies = mutableListOf<MovieItem>()
 
                 for (movieSnapshot in snapshot.children) {
-                    val movie = movieSnapshot.getValue(MovieItem::class.java)
+                    val movie = parseMovie(movieSnapshot)
                     if (movie != null) {
-                        movie.movie_id = movieSnapshot.key
                         newMovies.add(movie)
                     }
                 }
 
                 val currentYear = Calendar.getInstance().get(Calendar.YEAR)
-                val moviesFromCurrentYear = newMovies.filter { it.year == currentYear }
+                val moviesFromCurrentYear = newMovies.filter { it.year?.toIntOrNull() == currentYear }
                 val recommendedMovies = moviesFromCurrentYear.sortedWith(
                     compareByDescending<MovieItem> { it.num_votes }
                         .thenByDescending { it.rating })

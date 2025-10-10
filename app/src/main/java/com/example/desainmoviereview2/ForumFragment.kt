@@ -151,7 +151,7 @@ class ForumFragment : Fragment() {
                 posts.clear()
                 if (snapshot.exists()) {
                     for (postSnapshot in snapshot.children) {
-                        val post = postSnapshot.getValue(ForumPost::class.java)
+                        val post = parseForumPost(postSnapshot)
                         if (post != null) {
                             posts.add(post)
                         }
@@ -167,6 +167,57 @@ class ForumFragment : Fragment() {
         }
         query?.addValueEventListener(valueEventListener!!)
     }
+
+    private fun parseForumPost(postSnapshot: DataSnapshot): ForumPost? {
+        val postMap = postSnapshot.getValue(object : GenericTypeIndicator<Map<String, Any?>>() {})
+        return if (postMap != null) {
+            val userRating = (postMap["user_rating"] as? Number)?.toInt()
+            val createdAt = (postMap["created_at"] as? Number)?.toLong()
+
+            val repliesMap = postMap["replies"] as? Map<String, Any>
+            val replies = mutableMapOf<String, Reply>()
+            if (repliesMap != null) {
+                for ((replyId, replyData) in repliesMap) {
+                    val replyMap = replyData as? Map<String, Any?>
+                    if (replyMap != null) {
+                        val reply = parseReply(replyMap)
+                        if (reply != null) {
+                            replies[replyId] = reply
+                        }
+                    }
+                }
+            }
+
+            ForumPost(
+                post_id = postSnapshot.key,
+                movie_id = postMap["movie_id"] as? String,
+                title = postMap["title"] as? String,
+                content = postMap["content"] as? String,
+                author_uid = postMap["author_uid"] as? String,
+                author_username = postMap["author_username"] as? String,
+                author_avatar_base64 = postMap["author_avatar_base64"] as? String ?: "",
+                user_rating = userRating,
+                created_at = createdAt,
+                replies = replies
+            )
+        } else {
+            null
+        }
+    }
+
+    private fun parseReply(replyMap: Map<String, Any?>): Reply? {
+        val createdAt = (replyMap["created_at"] as? Number)?.toLong()
+
+        return Reply(
+            post_id = replyMap["post_id"] as? String,
+            author_uid = replyMap["author_uid"] as? String,
+            author_username = replyMap["author_username"] as? String,
+            author_avatar_base64 = replyMap["author_avatar_base64"] as? String ?: "",
+            content = replyMap["content"] as? String,
+            created_at = createdAt
+        )
+    }
+
 
     /**
      * Submits a new post to the forum.

@@ -12,7 +12,7 @@ import kotlinx.parcelize.Parcelize
 data class MovieItem(
     var movie_id: String? = null,
     val title: String? = null,
-    val year: Int? = null,
+    val year: String? = null,
     val rating: Double? = null,
     val num_votes: Double? = null,
     val runtime_minutes: Double? = null,
