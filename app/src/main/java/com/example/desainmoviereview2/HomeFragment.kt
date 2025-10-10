@@ -37,7 +37,6 @@ class HomeFragment : Fragment() {
 
     private var autoSlideRunnable: Runnable? = null
     private val autoSlideDelay = 3000L
-
     private var pageChangeCallback: ViewPager2.OnPageChangeCallback? = null
 
     override fun onCreateView(
@@ -50,9 +49,7 @@ class HomeFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         database = FirebaseDatabase.getInstance("https://movie-recommendation-b7ce0-default-rtdb.asia-southeast1.firebasedatabase.app").reference
-
         setupRecyclerViews()
         fetchMovies()
         setupSearchView()
@@ -114,18 +111,15 @@ class HomeFragment : Fragment() {
         moviesRef.orderByChild("title").equalTo(title).limitToFirst(1).addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 if (snapshot.exists()) {
-                    // Film ditemukan di Firebase, langsung navigasi
                     val movieSnapshot = snapshot.children.first()
                     val movie = parseMovie(movieSnapshot)
                     if (movie?.movie_id != null) {
                         navigateToRecommendation(movie.movie_id!!)
                     }
                 } else {
-                    // Film TIDAK ditemukan, mulai alur penambahan film
                     if (tmdbMovie != null) {
                         addMovieFlow(tmdbMovie)
                     } else {
-                        // Jika tidak ada info TmdbMovie (dari onQueryTextSubmit), cari dulu
                         findMovieOnTMDbThenAdd(title)
                     }
                 }
@@ -143,7 +137,6 @@ class HomeFragment : Fragment() {
             try {
                 val response = ApiClient.tmdbService.searchMovies(tmdbApiKey, title)
                 if (response.results.isNotEmpty()) {
-                    // Ambil hasil pertama dan mulai alur penambahan film
                     addMovieFlow(response.results.first())
                 } else {
                     Toast.makeText(context, "Movie '$title' not found.", Toast.LENGTH_SHORT).show()
@@ -191,17 +184,13 @@ class HomeFragment : Fragment() {
     private fun parseMovie(movieSnapshot: DataSnapshot): MovieItem? {
         val movieMap = movieSnapshot.getValue(object : GenericTypeIndicator<Map<String, Any?>>() {})
         return if (movieMap != null) {
-            val rating = (movieMap["rating"] as? Number)?.toDouble()
-            val numVotes = (movieMap["num_votes"] as? Number)?.toDouble()
-            val runtimeMinutes = (movieMap["runtime_minutes"] as? Number)?.toDouble()
-
             MovieItem(
                 movie_id = movieSnapshot.key,
                 title = movieMap["title"] as? String,
-                year = (movieMap["year"] as? Number)?.toInt(),
-                rating = rating,
-                num_votes = numVotes,
-                runtime_minutes = runtimeMinutes,
+                year = movieMap["year"]?.toString(),
+                rating = (movieMap["rating"] as? Number)?.toDouble(),
+                num_votes = (movieMap["num_votes"] as? Number)?.toDouble(),
+                runtime_minutes = (movieMap["runtime_minutes"] as? Number)?.toDouble(),
                 directors = movieMap["directors"] as? String,
                 writers = movieMap["writers"] as? String,
                 genres = movieMap["genres"] as? String,
@@ -235,33 +224,26 @@ class HomeFragment : Fragment() {
         val moviesRef = database.child("movies")
         moviesRef.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                if (_binding == null) {
-                    return
-                }
+                if (_binding == null) return
 
                 val newMovies = mutableListOf<MovieItem>()
-
                 for (movieSnapshot in snapshot.children) {
                     val movie = parseMovie(movieSnapshot)
-                    if (movie != null) {
-                        newMovies.add(movie)
-                    }
+                    if (movie != null) newMovies.add(movie)
                 }
 
                 val currentYear = Calendar.getInstance().get(Calendar.YEAR)
-                val moviesFromCurrentYear = newMovies.filter { it.year == currentYear }
+                val moviesFromCurrentYear = newMovies.filter { it.year?.toIntOrNull() == currentYear }
                 val recommendedMovies = moviesFromCurrentYear.sortedWith(
-                    compareByDescending<MovieItem> { it.num_votes }
-                        .thenByDescending { it.rating })
+                    compareByDescending<MovieItem> { it.num_votes }.thenByDescending { it.rating }
+                )
 
                 val newBanners = recommendedMovies.take(3)
-
                 homeListAdapter.submitList(recommendedMovies)
                 homeBannerAdapter.submitList(newBanners)
 
                 if (newBanners.isNotEmpty()) {
                     setupAutoSlide()
-
                     val startPosition = (Int.MAX_VALUE / 2) - ((Int.MAX_VALUE / 2) % newBanners.size)
                     binding.bannerViewPager.setCurrentItem(startPosition, false)
                 }
@@ -280,10 +262,7 @@ class HomeFragment : Fragment() {
 
     private fun setupAutoSlide() {
         if (homeBannerAdapter.itemCount == 0) return
-
-        if (autoSlideRunnable != null) {
-            stopAutoSlideLogic()
-        }
+        if (autoSlideRunnable != null) stopAutoSlideLogic()
 
         autoSlideRunnable = Runnable {
             _binding?.let {
@@ -296,7 +275,6 @@ class HomeFragment : Fragment() {
         pageChangeCallback?.let { binding.bannerViewPager.unregisterOnPageChangeCallback(it) }
         pageChangeCallback = object : ViewPager2.OnPageChangeCallback() {
             private var isUserInteracting = false
-
             override fun onPageScrollStateChanged(state: Int) {
                 when (state) {
                     ViewPager2.SCROLL_STATE_DRAGGING -> {
@@ -314,9 +292,7 @@ class HomeFragment : Fragment() {
                 }
             }
         }
-
         pageChangeCallback?.let { binding.bannerViewPager.registerOnPageChangeCallback(it) }
-
         startAutoSlideLogic()
     }
 
