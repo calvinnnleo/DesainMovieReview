@@ -96,7 +96,8 @@ class RecommendationFragment : Fragment() {
         lifecycleScope.launch {
             try {
                 val request = RecommendationRequest(imdbID)
-                val response = ApiClient.apiService.getRecommendations(request)
+                // Menggunakan recommendationService dari ApiClient
+                val response = ApiClient.recommendationService.getRecommendations(request)
 
                 if (response.status == "ok") {
                     val recommendedMovieTitles = response.recommendations.map { it.title }

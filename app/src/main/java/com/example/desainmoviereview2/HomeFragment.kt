@@ -7,28 +7,33 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.appcompat.widget.SearchView
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.viewpager2.widget.ViewPager2
 import com.example.desainmoviereview2.databinding.FragmentHomeBinding
+import com.example.desainmoviereview2.network.AddMovieRequest
+import com.example.desainmoviereview2.network.ApiClient
 import com.google.firebase.database.*
+import kotlinx.coroutines.launch
 import java.util.Calendar
 
-/**
- * Fragment for the home screen.
- */
 class HomeFragment : Fragment() {
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var homeBannerAdapter: HomeBannerAdapter
     private lateinit var homeListAdapter: HomeListAdapter
+    private lateinit var searchPredictionAdapter: SearchPredictionAdapter
 
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
 
     private lateinit var database: DatabaseReference
+    private val tmdbApiKey = "24e64bebed4e33fec97d673f70409451"
 
     private var autoSlideRunnable: Runnable? = null
     private val autoSlideDelay = 3000L
@@ -53,92 +58,192 @@ class HomeFragment : Fragment() {
         setupSearchView()
     }
 
-    /**
-     * Sets up the search view.
-     */
+    private fun setMainContentVisibility(isVisible: Boolean) {
+        val visibility = if (isVisible) View.VISIBLE else View.GONE
+        binding.bannerViewPager.visibility = visibility
+        binding.recommendationTitle.visibility = visibility
+        binding.movieList.visibility = visibility
+    }
+
     private fun setupSearchView() {
         binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 if (!query.isNullOrEmpty()) {
-                    searchMovie(query)
+                    searchMovieInDb(query)
                 }
+                binding.searchPredictionsRecyclerView.visibility = View.GONE
+                setMainContentVisibility(true)
+                binding.searchView.clearFocus()
                 return true
             }
 
             override fun onQueryTextChange(newText: String?): Boolean {
-                return false
+                if (newText.isNullOrEmpty()) {
+                    binding.searchPredictionsRecyclerView.visibility = View.GONE
+                    setMainContentVisibility(true)
+                } else {
+                    fetchMoviePredictionsFromTMDb(newText)
+                    setMainContentVisibility(false)
+                }
+                return true
             }
         })
+
+        binding.searchView.setOnCloseListener {
+            binding.searchPredictionsRecyclerView.visibility = View.GONE
+            setMainContentVisibility(true)
+            false
+        }
     }
 
-    /**
-     * Searches for a movie in the database.
-     */
-    private fun searchMovie(title: String) {
+    private fun fetchMoviePredictionsFromTMDb(query: String) {
+        lifecycleScope.launch {
+            try {
+                val response = ApiClient.tmdbService.searchMovies(tmdbApiKey, query)
+                searchPredictionAdapter.updatePredictions(response.results)
+                binding.searchPredictionsRecyclerView.visibility = if (response.results.isNotEmpty()) View.VISIBLE else View.GONE
+            } catch (e: Exception) {
+                Log.e("HomeFragment", "Failed to fetch movie predictions from TMDb.", e)
+                binding.searchPredictionsRecyclerView.visibility = View.GONE
+            }
+        }
+    }
+
+    private fun searchMovieInDb(title: String, tmdbMovie: com.example.desainmoviereview2.network.TmdbMovie? = null) {
         val moviesRef = database.child("movies")
         moviesRef.orderByChild("title").equalTo(title).limitToFirst(1).addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 if (snapshot.exists()) {
-                    for (movieSnapshot in snapshot.children) {
-                        val movie = movieSnapshot.getValue(MovieItem::class.java)
-                        if (movie != null) {
-                            movie.movie_id = movieSnapshot.key
-                            val bundle = bundleOf("imdbID" to movie.movie_id)
-                            findNavController().navigate(R.id.action_homeFragment_to_recommendationFragment, bundle)
-                        }
+                    // Film ditemukan di Firebase, langsung navigasi
+                    val movieSnapshot = snapshot.children.first()
+                    val movie = parseMovie(movieSnapshot)
+                    if (movie?.movie_id != null) {
+                        navigateToRecommendation(movie.movie_id!!)
                     }
-                }
-                 else {
-                    Log.d("HomeFragment", "Movie with title '$title' not found.")
+                } else {
+                    // Film TIDAK ditemukan, mulai alur penambahan film
+                    if (tmdbMovie != null) {
+                        addMovieFlow(tmdbMovie)
+                    } else {
+                        // Jika tidak ada info TmdbMovie (dari onQueryTextSubmit), cari dulu
+                        findMovieOnTMDbThenAdd(title)
+                    }
                 }
             }
 
             override fun onCancelled(error: DatabaseError) {
-                Log.e("HomeFragment", "Failed to search for movie.", error.toException())
+                Log.e("HomeFragment", "Failed to search for movie in DB.", error.toException())
+                Toast.makeText(context, "Database error.", Toast.LENGTH_SHORT).show()
             }
         })
     }
 
-    /**
-     * Sets up the RecyclerViews for the banner and movie list.
-     */
-    private fun setupRecyclerViews() {
-        // Initializes the adapter for the ViewPager2 (banner).
-        homeBannerAdapter = HomeBannerAdapter { movie ->
-            openForumPage(movie)
+    private fun findMovieOnTMDbThenAdd(title: String) {
+        lifecycleScope.launch {
+            try {
+                val response = ApiClient.tmdbService.searchMovies(tmdbApiKey, title)
+                if (response.results.isNotEmpty()) {
+                    // Ambil hasil pertama dan mulai alur penambahan film
+                    addMovieFlow(response.results.first())
+                } else {
+                    Toast.makeText(context, "Movie '$title' not found.", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Log.e("HomeFragment", "Error finding movie on TMDb", e)
+            }
         }
-        binding.bannerViewPager.adapter = homeBannerAdapter
-
-        // Initializes the RecyclerView for the home movie list.
-        homeListAdapter = HomeListAdapter { movie ->
-            openForumPage(movie)
-        }
-        binding.movieList.adapter = homeListAdapter
-
-        // Sets the layout manager to a 2-column grid. This is a good choice for displaying movie posters.
-        binding.movieList.layoutManager = GridLayoutManager(requireContext(), 2)
-
-        // SetHasFixedSize(true) tells the RecyclerView that the item size won't change
-        binding.movieList.setHasFixedSize(true)
     }
 
-    /**
-     * Fetches the movies from the database.
-     */
+    private fun addMovieFlow(tmdbMovie: com.example.desainmoviereview2.network.TmdbMovie) {
+        Toast.makeText(context, "Movie not in DB. Adding...", Toast.LENGTH_SHORT).show()
+        lifecycleScope.launch {
+            try {
+                val movieDetails = ApiClient.tmdbService.getMovieDetails(tmdbMovie.id, tmdbApiKey)
+                val imdbId = movieDetails.imdbId
+
+                if (imdbId.isNullOrBlank()) {
+                    Toast.makeText(context, "Could not find IMDb ID for this movie.", Toast.LENGTH_LONG).show()
+                    return@launch
+                }
+
+                val addMovieRequest = AddMovieRequest(imdbId)
+                val addMovieResponse = ApiClient.recommendationService.addMovie(addMovieRequest)
+
+                if (addMovieResponse.status == "ok") {
+                    Toast.makeText(context, "Movie added! Getting recommendations...", Toast.LENGTH_SHORT).show()
+                    navigateToRecommendation(imdbId)
+                } else {
+                    Toast.makeText(context, "Error: ${addMovieResponse.message}", Toast.LENGTH_LONG).show()
+                }
+
+            } catch (e: Exception) {
+                Log.e("HomeFragment", "Failed during add movie flow", e)
+                Toast.makeText(context, "An error occurred while adding the movie.", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    private fun navigateToRecommendation(imdbID: String) {
+        val bundle = bundleOf("imdbID" to imdbID)
+        findNavController().navigate(R.id.action_homeFragment_to_recommendationFragment, bundle)
+    }
+
+    private fun parseMovie(movieSnapshot: DataSnapshot): MovieItem? {
+        val movieMap = movieSnapshot.getValue(object : GenericTypeIndicator<Map<String, Any?>>() {})
+        return if (movieMap != null) {
+            val rating = (movieMap["rating"] as? Number)?.toDouble()
+            val numVotes = (movieMap["num_votes"] as? Number)?.toDouble()
+            val runtimeMinutes = (movieMap["runtime_minutes"] as? Number)?.toDouble()
+
+            MovieItem(
+                movie_id = movieSnapshot.key,
+                title = movieMap["title"] as? String,
+                year = (movieMap["year"] as? Number)?.toInt(),
+                rating = rating,
+                num_votes = numVotes,
+                runtime_minutes = runtimeMinutes,
+                directors = movieMap["directors"] as? String,
+                writers = movieMap["writers"] as? String,
+                genres = movieMap["genres"] as? String,
+                overview = movieMap["overview"] as? String,
+                crew = movieMap["crew"] as? String,
+                primary_image_url = movieMap["primary_image_url"] as? String,
+                thumbnail_url = movieMap["thumbnail_url"] as? String
+            )
+        } else {
+            null
+        }
+    }
+
+    private fun setupRecyclerViews() {
+        homeBannerAdapter = HomeBannerAdapter { movie -> openForumPage(movie) }
+        binding.bannerViewPager.adapter = homeBannerAdapter
+
+        homeListAdapter = HomeListAdapter { movie -> openForumPage(movie) }
+        binding.movieList.adapter = homeListAdapter
+        binding.movieList.layoutManager = GridLayoutManager(requireContext(), 2)
+        binding.movieList.setHasFixedSize(true)
+
+        searchPredictionAdapter = SearchPredictionAdapter(emptyList()) { tmdbMovie ->
+            searchMovieInDb(tmdbMovie.title, tmdbMovie)
+        }
+        binding.searchPredictionsRecyclerView.layoutManager = LinearLayoutManager(context)
+        binding.searchPredictionsRecyclerView.adapter = searchPredictionAdapter
+    }
+
     private fun fetchMovies() {
         val moviesRef = database.child("movies")
         moviesRef.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 if (_binding == null) {
-                    return // View is destroyed, do not proceed
+                    return
                 }
 
                 val newMovies = mutableListOf<MovieItem>()
 
                 for (movieSnapshot in snapshot.children) {
-                    val movie = movieSnapshot.getValue(MovieItem::class.java)
+                    val movie = parseMovie(movieSnapshot)
                     if (movie != null) {
-                        movie.movie_id = movieSnapshot.key
                         newMovies.add(movie)
                     }
                 }
@@ -168,17 +273,11 @@ class HomeFragment : Fragment() {
         })
     }
 
-    /**
-     * Opens the forum page for the selected movie.
-     */
     private fun openForumPage(movie: MovieItem) {
         val bundle = bundleOf("movieItem" to movie)
         findNavController().navigate(R.id.action_global_forumFragment, bundle)
     }
 
-    /**
-     * Sets up the auto-sliding banner.
-     */
     private fun setupAutoSlide() {
         if (homeBannerAdapter.itemCount == 0) return
 
@@ -186,7 +285,7 @@ class HomeFragment : Fragment() {
             stopAutoSlideLogic()
         }
 
-        autoSlideRunnable = Runnable { 
+        autoSlideRunnable = Runnable {
             _binding?.let {
                 val currentItem = it.bannerViewPager.currentItem
                 val nextItem = currentItem + 1
@@ -206,10 +305,10 @@ class HomeFragment : Fragment() {
                     }
                     ViewPager2.SCROLL_STATE_IDLE -> {
                         if (isUserInteracting) {
-                            startAutoSlideLogic() // Argument removed
+                            startAutoSlideLogic()
                             isUserInteracting = false
                         } else {
-                            startAutoSlideLogic() // Argument removed
+                            startAutoSlideLogic()
                         }
                     }
                 }
@@ -221,19 +320,13 @@ class HomeFragment : Fragment() {
         startAutoSlideLogic()
     }
 
-    /**
-     * Starts the auto-sliding banner.
-     */
-    private fun startAutoSlideLogic() { // Parameter removed
+    private fun startAutoSlideLogic() {
         autoSlideRunnable?.let { runnable ->
             handler.removeCallbacks(runnable)
             handler.postDelayed(runnable, autoSlideDelay)
         }
     }
 
-    /**
-     * Stops the auto-sliding banner.
-     */
     private fun stopAutoSlideLogic() {
         autoSlideRunnable?.let { handler.removeCallbacks(it) }
     }
@@ -245,7 +338,6 @@ class HomeFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        // CORRECTED: Check the adapter's item count directly.
         if (homeBannerAdapter.itemCount > 0 && _binding != null) {
             startAutoSlideLogic()
         }

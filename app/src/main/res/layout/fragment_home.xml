@@ -20,7 +20,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Banner -->
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/bannerViewPager"
         android:layout_width="0dp"
@@ -32,7 +31,6 @@
         app:layout_constraintTop_toBottomOf="@+id/searchView" />
 
 
-    <!-- List Film Title -->
     <TextView
         android:id="@+id/recommendation_title"
         android:layout_width="0dp"
@@ -45,7 +43,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/bannerViewPager" />
 
-    <!-- RecyclerView fills the remaining space -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/movie_list"
         android:layout_width="0dp"
@@ -58,5 +55,18 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/recommendation_title" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/search_predictions_recycler_view"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone"
+        android:background="?attr/colorSurface"
+        app:layout_constraintTop_toBottomOf="@id/searchView"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:listitem="@layout/item_search_prediction"
+        tools:visibility="visible"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
