@@ -76,7 +76,7 @@ class HomeFragment : Fragment() {
      */
     private fun searchMovie(title: String) {
         val moviesRef = database.child("movies")
-        moviesRef.orderByChild("title").startAt(title).endAt(title + "").limitToFirst(1).addListenerForSingleValueEvent(object : ValueEventListener {
+        moviesRef.orderByChild("title").equalTo(title).limitToFirst(1).addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 if (snapshot.exists()) {
                     for (movieSnapshot in snapshot.children) {
@@ -236,9 +236,6 @@ class HomeFragment : Fragment() {
                         } else {
                             startAutoSlideLogic() // Argument removed
                         }
-                    }
-                    ViewPager2.SCROLL_STATE_SETTLING -> {
-                        // Nothing to do here, but the case is handled to avoid the warning
                     }
                 }
             }
