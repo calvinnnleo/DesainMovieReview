@@ -1,4 +1,4 @@
-# DesainMovieReview2
+# CineMatch
 
 Dive into the world of cinema with our movie application. Discover new movies, share your thoughts, and get recommendations tailored just for you.
 
