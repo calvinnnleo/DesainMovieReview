@@ -18,5 +18,6 @@ data class ForumPost(
     val author_avatar_base64: String? = "",
     val user_rating: Int? = 0,
     val created_at: Long? = null,
-    val replies: @RawValue Map<String, Reply> = emptyMap()
+    val replies: @RawValue Map<String, Reply> = emptyMap(),
+    val isEdited: Boolean = false
 ) : Parcelable

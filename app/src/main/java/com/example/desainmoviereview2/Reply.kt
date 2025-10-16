@@ -13,5 +13,6 @@ data class Reply(
     val author_username: String? = null,
     val author_avatar_base64: String? = "",
     val content: String? = null,
-    val created_at: Long? = null
+    val created_at: Long? = null,
+    val isEdited: Boolean = false
 ) : Parcelable
