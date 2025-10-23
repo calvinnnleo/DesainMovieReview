@@ -210,7 +210,10 @@ class HomeFragment : Fragment() {
 
         homeListAdapter = HomeListAdapter { movie -> openForumPage(movie) }
         binding.movieList.adapter = homeListAdapter
-        binding.movieList.layoutManager = GridLayoutManager(requireContext(), 2)
+        binding.movieList.layoutManager = LinearLayoutManager(
+            requireContext(),
+            LinearLayoutManager.HORIZONTAL,
+            false)
         binding.movieList.setHasFixedSize(true)
 
         searchPredictionAdapter = SearchPredictionAdapter(emptyList()) { tmdbMovie ->
@@ -239,7 +242,7 @@ class HomeFragment : Fragment() {
                 )
 
                 val newBanners = recommendedMovies.take(3)
-                homeListAdapter.submitList(recommendedMovies)
+                homeListAdapter.submitList(recommendedMovies.take(10))
                 homeBannerAdapter.submitList(newBanners)
 
                 if (newBanners.isNotEmpty()) {
