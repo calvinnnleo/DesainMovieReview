@@ -196,7 +196,7 @@ class MovieListFragment : Fragment() {
             "Newest" -> filteredList.sortedByDescending { it.year?.toIntOrNull() }
             else -> filteredList.sortedByDescending { it.title }
         }
-        movieListAdapter.updateMovies(sortedList)
+        movieListAdapter.updateMovies(sortedList.take(100))
     }
 
     override fun onDestroyView() {
