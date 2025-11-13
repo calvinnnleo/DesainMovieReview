@@ -20,11 +20,14 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import com.google.firebase.database.ServerValue
 import jp.wasabeef.glide.transformations.BlurTransformation
+import androidx.navigation.fragment.navArgs
 
 class ForumFragment : Fragment() {
 
     private var _binding: FragmentForumBinding? = null
     private val binding get() = _binding!!
+
+    private val args: ForumFragmentArgs by navArgs()
 
     private lateinit var auth: FirebaseAuth
     private lateinit var forumPostsRef: DatabaseReference
@@ -49,7 +52,7 @@ class ForumFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        movieItem = arguments?.getParcelable("movieItem")
+        movieItem = args.movie
 
         if (movieItem == null || movieItem?.movie_id.isNullOrBlank()) {
             showSnackbar("Error: Movie data is missing.", Snackbar.LENGTH_LONG)

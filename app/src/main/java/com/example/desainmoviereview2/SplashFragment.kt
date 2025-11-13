@@ -1,18 +1,22 @@
 package com.example.desainmoviereview2
 
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.delay
 
-/**
- * A simple [Fragment] subclass that displays a splash screen.
- */
 class SplashFragment : Fragment() {
 
     private lateinit var auth: FirebaseAuth
@@ -20,26 +24,21 @@ class SplashFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_splash, container, false)
+    ): View {
+        return ComposeView(requireContext()).apply {
+            setContent {
+                SplashScreen {
+                    checkUserStatus()
+                }
+            }
+        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         auth = FirebaseAuth.getInstance()
-
-        // Use a Handler to delay the navigation to the next screen
-        Handler(Looper.getMainLooper()).postDelayed({
-            if (isAdded) { // Check if the fragment is still attached to the activity
-                checkUserStatus()
-            }
-        }, 2000) // 2 second delay
     }
 
-    /**
-     * Checks the user's authentication status and navigates to the appropriate screen.
-     */
     private fun checkUserStatus() {
         if (auth.currentUser != null) {
             // If the user is logged in, navigate to the home fragment
@@ -48,5 +47,20 @@ class SplashFragment : Fragment() {
             // If the user is not logged in, navigate to the login fragment
             findNavController().navigate(R.id.action_splashFragment_to_loginFragment)
         }
+    }
+}
+
+@Composable
+fun SplashScreen(onTimeout: () -> Unit) {
+    LaunchedEffect(Unit) {
+        delay(2000) // 2 second delay
+        onTimeout()
+    }
+
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        CircularProgressIndicator()
     }
 }
