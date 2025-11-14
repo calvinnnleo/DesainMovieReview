@@ -100,37 +100,29 @@ fun SearchTextField(
         value = query,
         onValueChange = onQueryChange,
         modifier = modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.background),
+            .fillMaxWidth(),
         label = {
             Text(
-                "Search Movies",
-                color = MaterialTheme.colorScheme.surfaceVariant
+                "Search Movies"
             ) },
         leadingIcon = {
             Icon(
                 Icons.Default.Search,
-                contentDescription = "Search Icon",
-                tint = MaterialTheme.colorScheme.surfaceVariant
+                contentDescription = "Search Icon"
             ) },
         trailingIcon = {
             if (query.isNotEmpty()) {
                 IconButton(onClick = onClear) {
                     Icon(
                         Icons.Default.Clear,
-                        contentDescription = "Clear Search",
-                        tint = MaterialTheme.colorScheme.surfaceVariant
+                        contentDescription = "Clear Search"
                     )
                 }
             }
         },
         singleLine = true,
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-        keyboardActions = KeyboardActions(onSearch = { keyboardController?.hide() }),
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedContainerColor = MaterialTheme.colorScheme.background,
-            unfocusedContainerColor = MaterialTheme.colorScheme.background,
-        )
+        keyboardActions = KeyboardActions(onSearch = { keyboardController?.hide() })
     )
 }
 
@@ -191,9 +183,11 @@ fun MainContent(
         item {
             Text(
                 text = "Recommended Movies",
-                color = MaterialTheme.colorScheme.onSurface,
                 style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(top = 24.dp, bottom = 8.dp, start = 16.dp, end = 16.dp)
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier
+                    .padding(top = 24.dp, bottom = 8.dp, start = 16.dp, end = 16.dp)
+
             )
         }
 
@@ -243,10 +237,6 @@ fun MovieCard(
     onClick: () -> Unit,
     onLongClick: () -> Unit
 ) {
-    // Use colorScheme for theme-aware colors
-    val cardBackground = MaterialTheme.colorScheme.surfaceVariant
-    val textColor = MaterialTheme.colorScheme.onSurfaceVariant
-
     Card(
         modifier = Modifier
             .padding(8.dp)
@@ -255,8 +245,7 @@ fun MovieCard(
                 onClick = onClick,
                 onLongClick = onLongClick
             ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = cardBackground)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Box {
             GlideImage(
@@ -265,8 +254,7 @@ fun MovieCard(
                 loading = placeholder {
                     Box(
                         modifier = Modifier
-                            .fillMaxSize()
-                            .background(MaterialTheme.colorScheme.surface),
+                            .fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
                         CircularProgressIndicator()
@@ -275,19 +263,16 @@ fun MovieCard(
                 failure = placeholder {
                     Box(
                         Modifier
-                            .fillMaxSize()
-                            .background(MaterialTheme.colorScheme.surfaceVariant),
+                            .fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             Icons.Filled.ImageNotSupported,
-                            contentDescription = "Image not available",
-                            tint = MaterialTheme.colorScheme.surfaceVariant
+                            contentDescription = "Image not available"
                         )
                     }
                 },
                 modifier = Modifier
-                    .background(MaterialTheme.colorScheme.surface)
                     .fillMaxWidth()
                     .height(200.dp),
                 contentScale = ContentScale.Crop

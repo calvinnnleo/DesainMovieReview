@@ -1,4 +1,4 @@
-package com.example.desainmoviereview2
+package com.example.desainmoviereview2.forum
 
 import com.google.firebase.database.Exclude
 import com.google.firebase.database.IgnoreExtraProperties

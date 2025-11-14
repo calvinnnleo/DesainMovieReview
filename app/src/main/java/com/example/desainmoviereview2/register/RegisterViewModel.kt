@@ -1,7 +1,8 @@
-package com.example.desainmoviereview2
+package com.example.desainmoviereview2.register
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.desainmoviereview2.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.messaging.FirebaseMessaging

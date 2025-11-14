@@ -1,4 +1,4 @@
-package com.example.desainmoviereview2
+package com.example.desainmoviereview2.forum
 
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize

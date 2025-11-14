@@ -24,7 +24,7 @@
 
     <fragment
         android:id="@+id/loginFragment"
-        android:name="com.example.desainmoviereview2.LoginFragment"
+        android:name="com.example.desainmoviereview2.login.LoginFragment"
         android:label="fragment_login"
         tools:layout="@layout/fragment_login" >
         <action
@@ -39,7 +39,7 @@
 
     <fragment
         android:id="@+id/registerFragment"
-        android:name="com.example.desainmoviereview2.RegisterFragment"
+        android:name="com.example.desainmoviereview2.register.RegisterFragment"
         android:label="fragment_register"
         tools:layout="@layout/fragment_register" >
         <action
@@ -83,7 +83,7 @@
 
     <fragment
         android:id="@+id/forumFragment"
-        android:name="com.example.desainmoviereview2.ForumFragment"
+        android:name="com.example.desainmoviereview2.forum.ForumFragment"
         android:label="ForumFragment"
         tools:layout="@layout/fragment_forum" >
         <argument
