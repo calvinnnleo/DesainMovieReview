@@ -1,4 +1,4 @@
-package com.example.desainmoviereview2.ui.theme
+package com.example.desainmoviereview2
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme

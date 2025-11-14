@@ -52,7 +52,21 @@ class ForumFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        movieItem = args.movie
+        val bundle = arguments // Ambil bundle argumen secara langsung
+        if (bundle == null) {
+            Log.e("NAV_DEBUG", "FATAL: Bundle di ForumFragment adalah NULL!")
+        } else {
+            Log.d("NAV_DEBUG", "Bundle di ForumFragment TIDAK null.")
+            Log.d("NAV_DEBUG", "Isi Keys di Bundle: ${bundle.keySet().joinToString()}")
+            val movieFromBundle = bundle.get("movie") // Coba ambil "movie" secara manual
+            if (movieFromBundle == null) {
+                Log.e("NAV_DEBUG", "FATAL: Key 'movie' ada tapi isinya NULL di dalam Bundle!")
+            } else {
+                Log.d("NAV_DEBUG", "Key 'movie' berhasil ditemukan di Bundle. Tipe Objek: ${movieFromBundle::class.java.name}")
+            }
+        }
+
+        movieItem = args.movieItem
 
         if (movieItem == null || movieItem?.movie_id.isNullOrBlank()) {
             showSnackbar("Error: Movie data is missing.", Snackbar.LENGTH_LONG)

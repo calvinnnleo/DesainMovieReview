@@ -1,4 +1,4 @@
-package com.example.desainmoviereview2
+package com.example.desainmoviereview2.home
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -12,7 +12,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import com.example.desainmoviereview2.ui.theme.MyAppTheme
+import com.example.desainmoviereview2.MyAppTheme
 
 class HomeFragment : Fragment() {
 
@@ -33,7 +33,7 @@ class HomeFragment : Fragment() {
                         uiState = uiState.value,
                         onSearchQueryChanged = { query -> viewModel.searchMovies(query) },
                         onMovieClicked = { movie ->
-                            val action = HomeFragmentDirections.actionGlobalForumFragment(movie)
+                            val action = HomeFragmentDirections.actionHomeFragmentToForumFragment(movie)
                             findNavController().navigate(action)
                         },
                         onMovieLongClicked = { movie ->
