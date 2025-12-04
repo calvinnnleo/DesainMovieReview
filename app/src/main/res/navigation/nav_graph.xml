@@ -77,7 +77,7 @@
 
     <fragment
         android:id="@+id/movieListFragment"
-        android:name="com.example.desainmoviereview2.MovieListFragment"
+        android:name="com.example.desainmoviereview2.movielist.MovieListFragment"
         android:label="fragment_movie_list"
         tools:layout="@layout/fragment_movie_list" />
 
@@ -96,7 +96,7 @@
 
     <fragment
         android:id="@+id/profileFragment"
-        android:name="com.example.desainmoviereview2.ProfileFragment"
+        android:name="com.example.desainmoviereview2.profile.ProfileFragment"
         android:label="ProfileFragment"
         tools:layout="@layout/fragment_profile" >
         <action

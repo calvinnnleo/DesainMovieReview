@@ -89,6 +89,7 @@ dependencies {
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3:1.2.1")
+    implementation("com.google.android.material:compose-theme-adapter-3:1.1.1")
     implementation("androidx.compose.material:material-icons-extended-android:1.6.7")
     implementation("androidx.activity:activity-compose:1.8.2")
     implementation("androidx.navigation:navigation-compose:2.7.7")
