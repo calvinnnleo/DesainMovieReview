@@ -31,7 +31,6 @@ class HomeFragment : Fragment() {
 
                     HomeScreen(
                         uiState = uiState.value,
-                        onSearchQueryChanged = { query -> viewModel.searchMovies(query) },
                         onMovieClicked = { movie ->
                             val action = HomeFragmentDirections.actionHomeFragmentToForumFragment(movie)
                             findNavController().navigate(action)
@@ -41,12 +40,6 @@ class HomeFragment : Fragment() {
                                 val action = HomeFragmentDirections.actionHomeFragmentToRecommendationFragment(it)
                                 findNavController().navigate(action)
                             }
-                        },
-                        onSearchConfirmed = { tmdbMovie ->
-                            viewModel.onSearchConfirmed(tmdbMovie)
-                        },
-                        onClearSearchResults = {
-                            viewModel.clearSearchResults()
                         }
                     )
                 }

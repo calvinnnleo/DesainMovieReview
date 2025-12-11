@@ -40,31 +40,13 @@ import com.example.desainmoviereview2.MyAppTheme
 @Composable
 fun HomeScreen(
     uiState: HomeUiState,
-    onSearchQueryChanged: (String) -> Unit,
     onMovieClicked: (MovieItem) -> Unit,
-    onMovieLongClicked: (MovieItem) -> Unit,
-    onSearchConfirmed: (TmdbMovie) -> Unit,
-    onClearSearchResults: () -> Unit
+    onMovieLongClicked: (MovieItem) -> Unit
 ) {
     Column(modifier = Modifier
         .fillMaxSize()
         .background(MaterialTheme.colorScheme.background)
     ) {
-        var searchQuery by remember { mutableStateOf("") }
-
-        SearchTextField(
-            query = searchQuery,
-            onQueryChange = {
-                searchQuery = it
-                onSearchQueryChanged(it)
-            },
-            onClear = {
-                searchQuery = ""
-                onClearSearchResults()
-            },
-            modifier = Modifier.padding(16.dp)
-        )
-
         when (uiState) {
             is HomeUiState.Loading -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -72,11 +54,7 @@ fun HomeScreen(
                 }
             }
             is HomeUiState.Success -> {
-                if (searchQuery.isNotBlank() && uiState.searchResults.isNotEmpty()) {
-                    SearchList(uiState.searchResults, onSearchConfirmed)
-                } else {
-                    MainContent(uiState, onMovieClicked, onMovieLongClicked)
-                }
+                MainContent(uiState, onMovieClicked, onMovieLongClicked)
             }
             is HomeUiState.Error -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -86,6 +64,7 @@ fun HomeScreen(
         }
     }
 }
+
 
 @Composable
 fun SearchTextField(

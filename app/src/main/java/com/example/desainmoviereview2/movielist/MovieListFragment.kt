@@ -27,6 +27,9 @@ class MovieListFragment : Fragment() {
             setContent {
                 MyAppTheme {
                     val uiState by viewModel.uiState.collectAsState()
+                    var searchQuery by androidx.compose.runtime.remember { 
+                        androidx.compose.runtime.mutableStateOf("") 
+                    }
 
                     MovieListScreen(
                         uiState = uiState,
@@ -35,7 +38,9 @@ class MovieListFragment : Fragment() {
                         onMovieClicked = { movie ->
                             val bundle = bundleOf("movieItem" to movie)
                             findNavController().navigate(R.id.action_global_forumFragment, bundle)
-                        }
+                        },
+                        searchQuery = searchQuery,
+                        onSearchQueryChanged = { searchQuery = it }
                     )
                 }
             }
