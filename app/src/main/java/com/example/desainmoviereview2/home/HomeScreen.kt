@@ -419,11 +419,8 @@ fun HomeScreenSuccessPreview() {
                 },
                 searchResults = emptyList()
             ),
-            onSearchQueryChanged = {},
             onMovieClicked = {},
-            onMovieLongClicked = {},
-            onSearchConfirmed = {},
-            onClearSearchResults = {}
+            onMovieLongClicked = {}
         )
     }
 }
