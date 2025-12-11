@@ -1,7 +1,8 @@
-package com.example.desainmoviereview2
+package com.example.desainmoviereview2.forum
 
 import com.google.firebase.database.Exclude
 import com.google.firebase.database.IgnoreExtraProperties
+import com.google.firebase.database.ServerValue
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -12,10 +13,10 @@ data class PostComment(
     val authorUid: String? = null,
     val authorUsername: String? = null,
     val content: String? = null,
-    val timestamp: Long? = null,
+    val timestamp: Any? = ServerValue.TIMESTAMP,
     val lastEdited: Long? = null,
     val inReplyToCommentId: String? = null
 ) {
     // Null default constructor for Firebase
-    constructor() : this(null, null, null, null, null, null, null)
+    constructor() : this(null, null, null, null, ServerValue.TIMESTAMP, null, null)
 }

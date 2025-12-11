@@ -33,6 +33,24 @@
             android:id="@+id/movie_desc"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            tools:text="Tanggal Rilis: 2023-01-01" />
+            tools:text="Action, Comedy, Drama" />
+
+        <TextView
+            android:id="@+id/movie_details"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            tools:text="2023 | 120 min | Rating: 8.0" />
+
+        <TextView
+            android:id="@+id/movie_director"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            tools:text="Director: John Doe" />
+
+        <TextView
+            android:id="@+id/movie_writers"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            tools:text="Writers: Jane Doe" />
     </LinearLayout>
 </LinearLayout>

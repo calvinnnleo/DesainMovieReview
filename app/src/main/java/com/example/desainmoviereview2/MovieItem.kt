@@ -4,12 +4,15 @@ import android.os.Parcelable
 import com.google.firebase.database.IgnoreExtraProperties
 import kotlinx.parcelize.Parcelize
 
+/**
+ * Data class for a movie item.
+ */
 @IgnoreExtraProperties
 @Parcelize
 data class MovieItem(
     var movie_id: String? = null,
     val title: String? = null,
-    val year: Int? = null,
+    val year: String? = null,
     val rating: Double? = null,
     // Change Int to Int? to allow null values
     val num_votes: Int? = null,

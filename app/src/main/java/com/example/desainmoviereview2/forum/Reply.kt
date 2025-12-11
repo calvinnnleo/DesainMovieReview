@@ -1,8 +1,11 @@
-package com.example.desainmoviereview2
+package com.example.desainmoviereview2.forum
 
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
 
+/**
+ * Data class for a reply to a forum post.
+ */
 @Parcelize
 data class Reply(
     val post_id: String? = null,
@@ -10,5 +13,6 @@ data class Reply(
     val author_username: String? = null,
     val author_avatar_base64: String? = "",
     val content: String? = null,
-    val created_at: Long? = null
+    val created_at: Long? = null,
+    val isEdited: Boolean = false
 ) : Parcelable

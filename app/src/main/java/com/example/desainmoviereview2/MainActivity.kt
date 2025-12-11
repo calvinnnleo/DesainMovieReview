@@ -1,20 +1,35 @@
 package com.example.desainmoviereview2
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
-import android.view.Menu
-import android.view.MenuItem
-import android.view.View
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.SearchView
+import androidx.core.content.ContextCompat
 import androidx.navigation.fragment.NavHostFragment
 import com.example.desainmoviereview2.databinding.ActivityMainBinding
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.FirebaseAuth
 
+/**
+ * The main activity of the application.
+ * This activity hosts the NavHostFragment and handles the bottom navigation.
+ */
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var auth: FirebaseAuth
+
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            // FCM SDK (and your app) can post notifications.
+        } else {
+            // Inform user that your app will not show notifications.
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,25 +39,17 @@ class MainActivity : AppCompatActivity() {
 
         auth = FirebaseAuth.getInstance()
 
-        setupSearchView()
+        askNotificationPermission()
 
+        // Set up the NavHostFragment and NavController
         val navHostFragment =
             supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         val navController = navHostFragment.navController
 
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_nav)
 
+        // Listen for destination changes to update the selected item in the bottom navigation
         navController.addOnDestinationChangedListener { _, destination, _ ->
-            // Show/hide search view based on destination
-            when (destination.id) {
-                R.id.homeFragment, R.id.movieListFragment -> {
-                    binding.searchView.visibility = View.VISIBLE
-                }
-                else -> {
-                    binding.searchView.visibility = View.GONE
-                }
-            }
-
             // Update the selected item in the bottom navigation
             val menuItem = bottomNav.menu.findItem(destination.id)
             if (menuItem != null) {
@@ -50,6 +57,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        // Set up the bottom navigation listener
         bottomNav.setOnNavigationItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.homeFragment -> {
@@ -61,6 +69,8 @@ class MainActivity : AppCompatActivity() {
                     true
                 }
                 R.id.profileFragment -> {
+                    // If the user is logged in, navigate to the profile fragment.
+                    // Otherwise, navigate to the login fragment.
                     if (auth.currentUser != null) {
                         navController.navigate(R.id.profileFragment)
                     } else {
@@ -73,37 +83,19 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.toolbar_menu, menu)
-        return true
-    }
-
-    // This method handles clicks on the menu items
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            R.id.action_notifications -> {
-                // TODO: Handle notification icon click
-                true
+    private fun askNotificationPermission() {
+        // This is only necessary for API level 33 and higher.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) ==
+                PackageManager.PERMISSION_GRANTED
+            ) {
+                // FCM SDK (and your app) can post notifications.
+            } else if (shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)) {
+                // TODO: Display an educational UI explaining why the permission is needed.
+            } else {
+                // Directly ask for the permission.
+                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
-            else -> super.onOptionsItemSelected(item)
         }
-    }
-
-    private fun setupSearchView() {
-        binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-            // This method is called when the user submits the query (e.g., by pressing enter)
-            override fun onQueryTextSubmit(query: String?): Boolean {
-//                if (query != null) {
-//                    filterMovies(query)
-//                }
-                return true
-            }
-            override fun onQueryTextChange(newText: String?): Boolean {
-//                if (newText != null) {
-//                    filterMovies(newText)
-//                }
-                return true
-            }
-        })
     }
 }
