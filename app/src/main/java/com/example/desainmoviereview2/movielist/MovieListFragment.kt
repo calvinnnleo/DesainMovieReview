@@ -6,6 +6,9 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
@@ -27,9 +30,7 @@ class MovieListFragment : Fragment() {
             setContent {
                 MyAppTheme {
                     val uiState by viewModel.uiState.collectAsState()
-                    var searchQuery by androidx.compose.runtime.remember { 
-                        androidx.compose.runtime.mutableStateOf("") 
-                    }
+                    var searchQuery by remember { mutableStateOf("") }
 
                     MovieListScreen(
                         uiState = uiState,
