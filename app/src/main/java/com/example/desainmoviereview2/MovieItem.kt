@@ -14,8 +14,7 @@ data class MovieItem(
     val title: String? = null,
     val year: String? = null,
     val rating: Double? = null,
-    // Change Int to Int? to allow null values
-    val num_votes: Int? = null,
+    val num_votes: Double? = null,
     val runtime_minutes: Double? = null,
     val directors: String? = null,
     val writers: String? = null,
