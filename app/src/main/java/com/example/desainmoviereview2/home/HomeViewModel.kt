@@ -25,6 +25,8 @@ class HomeViewModel : ViewModel() {
     private val _navigationEvent = MutableStateFlow<NavigationEvent?>(null)
     val navigationEvent: StateFlow<NavigationEvent?> = _navigationEvent.asStateFlow()
 
+    private var allMovies = mutableListOf<MovieItem>()
+
     init {
         fetchMovies()
     }
@@ -32,14 +34,14 @@ class HomeViewModel : ViewModel() {
     private fun fetchMovies() {
         database.child("movies").addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                val newMovies = mutableListOf<MovieItem>()
+                allMovies.clear()
                 for (movieSnapshot in snapshot.children) {
                     val movie = parseMovie(movieSnapshot)
-                    if (movie != null) newMovies.add(movie)
+                    if (movie != null) allMovies.add(movie)
                 }
 
                 val currentYear = Calendar.getInstance().get(Calendar.YEAR)
-                val moviesFromCurrentYear = newMovies.filter { it.year?.toIntOrNull() == currentYear }
+                val moviesFromCurrentYear = allMovies.filter { it.year?.toIntOrNull() == currentYear }
                 val recommendedMovies = moviesFromCurrentYear.sortedWith(
                     compareByDescending<MovieItem> { it.num_votes ?: 0.0 }.thenByDescending { it.rating ?: 0.0 }
                 )
@@ -48,17 +50,34 @@ class HomeViewModel : ViewModel() {
                 val movieList: List<MovieItem>
 
                 if (recommendedMovies.isNotEmpty()) {
-                    // If we have movies, take them for the UI
                     banners = recommendedMovies.take(3)
                     movieList = recommendedMovies.take(10)
                 } else {
-                    // If there are no recommended movies for this year, create empty lists
-                    // This prevents a crash in the UI Layer (e.g., Accompanist Pager)
                     banners = emptyList()
                     movieList = emptyList()
                 }
 
-                _uiState.value = HomeUiState.Success(banners, movieList, emptyList())
+                // Top Rated Movies - sorted by rating descending
+                val topRatedMovies = allMovies
+                    .filter { (it.rating ?: 0.0) >= 7.0 }
+                    .sortedByDescending { it.rating }
+                    .take(10)
+
+                // Movies by Genre - default to "Action"
+                val defaultGenre = "Action"
+                val moviesByGenre = allMovies
+                    .filter { it.genres?.contains(defaultGenre, ignoreCase = true) == true }
+                    .sortedByDescending { it.rating }
+                    .take(10)
+
+                _uiState.value = HomeUiState.Success(
+                    banners = banners, 
+                    movies = movieList, 
+                    searchResults = emptyList(),
+                    topRatedMovies = topRatedMovies,
+                    selectedGenre = defaultGenre,
+                    moviesByGenre = moviesByGenre
+                )
             }
 
             override fun onCancelled(error: DatabaseError) {
@@ -66,6 +85,21 @@ class HomeViewModel : ViewModel() {
             }
         })
     }
+
+    fun onGenreSelected(genre: String) {
+        val currentState = _uiState.value
+        if (currentState is HomeUiState.Success) {
+            val moviesByGenre = allMovies
+                .filter { it.genres?.contains(genre, ignoreCase = true) == true }
+                .sortedByDescending { it.rating }
+                .take(10)
+            _uiState.value = currentState.copy(
+                selectedGenre = genre,
+                moviesByGenre = moviesByGenre
+            )
+        }
+    }
+
 
     fun searchMovies(query: String) {
         if (query.isBlank()) {
@@ -169,7 +203,15 @@ class HomeViewModel : ViewModel() {
 
 sealed class HomeUiState {
     object Loading : HomeUiState()
-    data class Success(val banners: List<MovieItem>, val movies: List<MovieItem>, val searchResults: List<TmdbMovie>) : HomeUiState()
+    data class Success(
+        val banners: List<MovieItem>, 
+        val movies: List<MovieItem>, 
+        val searchResults: List<TmdbMovie>,
+        val topRatedMovies: List<MovieItem> = emptyList(),
+        val genres: List<String> = listOf("Action", "Comedy", "Drama", "Horror", "Thriller", "Sci-Fi", "Romance"),
+        val selectedGenre: String = "Action",
+        val moviesByGenre: List<MovieItem> = emptyList()
+    ) : HomeUiState()
     data class Error(val message: String) : HomeUiState()
 }
 

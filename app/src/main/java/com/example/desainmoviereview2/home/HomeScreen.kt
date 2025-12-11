@@ -44,7 +44,8 @@ fun HomeScreen(
     onMovieClicked: (MovieItem) -> Unit,
     onMovieLongClicked: (MovieItem) -> Unit,
     onSearchConfirmed: (TmdbMovie) -> Unit,
-    onClearSearchResults: () -> Unit
+    onClearSearchResults: () -> Unit,
+    onGenreSelected: (String) -> Unit = {}
 ) {
     Column(modifier = Modifier
         .fillMaxSize()
@@ -75,7 +76,7 @@ fun HomeScreen(
                 if (searchQuery.isNotBlank() && uiState.searchResults.isNotEmpty()) {
                     SearchList(uiState.searchResults, onSearchConfirmed)
                 } else {
-                    MainContent(uiState, onMovieClicked, onMovieLongClicked)
+                    MainContent(uiState, onMovieClicked, onMovieLongClicked, onGenreSelected)
                 }
             }
             is HomeUiState.Error -> {
@@ -131,7 +132,8 @@ fun SearchTextField(
 fun MainContent(
     uiState: HomeUiState.Success,
     onMovieClicked: (MovieItem) -> Unit,
-    onMovieLongClicked: (MovieItem) -> Unit
+    onMovieLongClicked: (MovieItem) -> Unit,
+    onGenreSelected: (String) -> Unit
 ) {
     LazyColumn {
         // Banner Pager
@@ -182,7 +184,7 @@ fun MainContent(
         // Recommended Movies
         item {
             Text(
-                text = "Recommended Movies",
+                text = "🎬 Recommended Movies",
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier
@@ -203,6 +205,98 @@ fun MainContent(
                     )
                 }
             }
+        }
+
+        // Top Rated Movies Section
+        if (uiState.topRatedMovies.isNotEmpty()) {
+            item {
+                Text(
+                    text = "⭐ Top Rated Movies",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier
+                        .padding(top = 24.dp, bottom = 8.dp, start = 16.dp, end = 16.dp)
+                )
+            }
+
+            item {
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 8.dp)
+                ) {
+                    items(uiState.topRatedMovies) { movie ->
+                        MovieCard(
+                            movie = movie,
+                            onClick = { onMovieClicked(movie) },
+                            onLongClick = { onMovieLongClicked(movie) }
+                        )
+                    }
+                }
+            }
+        }
+
+        // Browse by Genre Section
+        item {
+            Text(
+                text = "🎭 Browse by Genre",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier
+                    .padding(top = 24.dp, bottom = 8.dp, start = 16.dp, end = 16.dp)
+            )
+        }
+
+        // Genre Chips
+        item {
+            LazyRow(
+                contentPadding = PaddingValues(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(uiState.genres) { genre ->
+                    FilterChip(
+                        selected = uiState.selectedGenre == genre,
+                        onClick = { onGenreSelected(genre) },
+                        label = { Text(genre) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = MaterialTheme.colorScheme.primary,
+                            selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+                        )
+                    )
+                }
+            }
+        }
+
+        // Movies by Genre
+        if (uiState.moviesByGenre.isNotEmpty()) {
+            item {
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 8.dp),
+                    modifier = Modifier.padding(top = 8.dp)
+                ) {
+                    items(uiState.moviesByGenre) { movie ->
+                        MovieCard(
+                            movie = movie,
+                            onClick = { onMovieClicked(movie) },
+                            onLongClick = { onMovieLongClicked(movie) }
+                        )
+                    }
+                }
+            }
+        } else {
+            item {
+                Text(
+                    text = "No movies found for ${uiState.selectedGenre}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth()
+                )
+            }
+        }
+
+        // Bottom spacing
+        item {
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }
