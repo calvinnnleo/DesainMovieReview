@@ -198,10 +198,10 @@ fun TmdbSearchResultsList(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = tmdbMovie.overview?.take(80)?.plus("...") ?: "",
+                            text = "Tap to add to library",
                             style = MaterialTheme.typography.bodySmall,
-                            maxLines = 2,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            maxLines = 1,
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
                 }
