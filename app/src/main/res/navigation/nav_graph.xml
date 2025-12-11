@@ -79,7 +79,11 @@
         android:id="@+id/movieListFragment"
         android:name="com.example.desainmoviereview2.movielist.MovieListFragment"
         android:label="fragment_movie_list"
-        tools:layout="@layout/fragment_movie_list" />
+        tools:layout="@layout/fragment_movie_list">
+        <action
+            android:id="@+id/action_movieListFragment_to_recommendationFragment"
+            app:destination="@id/recommendationFragment" />
+    </fragment>
 
     <fragment
         android:id="@+id/forumFragment"
