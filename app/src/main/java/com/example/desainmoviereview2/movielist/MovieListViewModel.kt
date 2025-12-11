@@ -1,7 +1,11 @@
 package com.example.desainmoviereview2.movielist
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.desainmoviereview2.MovieItem
+import com.example.desainmoviereview2.network.AddMovieRequest
+import com.example.desainmoviereview2.network.ApiClient
+import com.example.desainmoviereview2.network.TmdbMovie
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
@@ -11,13 +15,19 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 class MovieListViewModel : ViewModel() {
 
     private val database = FirebaseDatabase.getInstance("https://movie-recommendation-b7ce0-default-rtdb.asia-southeast1.firebasedatabase.app").reference
+    private val tmdbApiKey = "945f4f99890ccfe89cf2b99acb95b940"
     
     private val _uiState = MutableStateFlow(MovieListUiState())
     val uiState: StateFlow<MovieListUiState> = _uiState.asStateFlow()
+
+    private val _navigationEvent = MutableStateFlow<MovieListNavigationEvent?>(null)
+    val navigationEvent: StateFlow<MovieListNavigationEvent?> = _navigationEvent.asStateFlow()
 
     private val allMovies = mutableListOf<MovieItem>()
 
@@ -50,6 +60,78 @@ class MovieListViewModel : ViewModel() {
     fun setSortBy(sortBy: String) {
         _uiState.update { it.copy(currentSortBy = sortBy) }
         applyFiltersAndSorting()
+    }
+
+    // TMDB Search
+    fun searchMovies(query: String) {
+        if (query.isBlank()) {
+            clearSearchResults()
+            return
+        }
+        viewModelScope.launch {
+            try {
+                val response = ApiClient.tmdbService.searchMovies(tmdbApiKey, query)
+                _uiState.update { it.copy(tmdbSearchResults = response.results) }
+            } catch (e: Exception) {
+                clearSearchResults()
+            }
+        }
+    }
+
+    fun onSearchConfirmed(tmdbMovie: TmdbMovie) {
+        viewModelScope.launch {
+            try {
+                val moviesRef = database.child("movies")
+                val snapshot = moviesRef.orderByChild("title").equalTo(tmdbMovie.title).limitToFirst(1).get().await()
+                if (snapshot.exists()) {
+                    val movieSnapshot = snapshot.children.first()
+                    val movie = parseMovie(movieSnapshot)
+                    if (movie?.movie_id != null) {
+                        _navigationEvent.value = MovieListNavigationEvent.ToRecommendation(movie.movie_id!!)
+                    }
+                } else {
+                    addMovieFlow(tmdbMovie)
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(errorMessage = "Failed to search for movie in DB.") }
+            }
+        }
+    }
+
+    private suspend fun addMovieFlow(tmdbMovie: TmdbMovie) {
+        try {
+            val movieDetails = ApiClient.tmdbService.getMovieDetails(tmdbMovie.id, tmdbApiKey)
+            val imdbId = movieDetails.imdbId
+
+            if (imdbId.isNullOrBlank()) {
+                _uiState.update { it.copy(errorMessage = "Could not find IMDb ID for this movie.") }
+                return
+            }
+
+            val addMovieRequest = AddMovieRequest(imdbId)
+            val addMovieResponse = ApiClient.recommendationService.addMovie(addMovieRequest)
+
+            if (addMovieResponse.status == "ok") {
+                _navigationEvent.value = MovieListNavigationEvent.ToRecommendation(imdbId)
+            } else {
+                _uiState.update { it.copy(errorMessage = "Error: ${addMovieResponse.message}") }
+            }
+
+        } catch (e: Exception) {
+            _uiState.update { it.copy(errorMessage = "An error occurred while adding the movie.") }
+        }
+    }
+
+    fun clearSearchResults() {
+        _uiState.update { it.copy(tmdbSearchResults = emptyList()) }
+    }
+
+    fun onNavigated() {
+        _navigationEvent.value = null
+    }
+
+    fun clearError() {
+        _uiState.update { it.copy(errorMessage = null) }
     }
 
     private fun applyFiltersAndSorting() {
@@ -108,5 +190,12 @@ data class MovieListUiState(
     val isLoading: Boolean = false,
     val currentGenreFilter: String = "All",
     val currentSortBy: String = "Default",
-    val filterGenres: List<String> = listOf("All", "Action", "Comedy", "Drama", "Horror", "Thriller", "Sci-Fi")
+    val filterGenres: List<String> = listOf("All", "Action", "Comedy", "Drama", "Horror", "Thriller", "Sci-Fi"),
+    val tmdbSearchResults: List<TmdbMovie> = emptyList(),
+    val errorMessage: String? = null
 )
+
+sealed class MovieListNavigationEvent {
+    data class ToRecommendation(val imdbId: String) : MovieListNavigationEvent()
+}
+

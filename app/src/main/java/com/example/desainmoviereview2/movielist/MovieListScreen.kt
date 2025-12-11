@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -48,6 +49,7 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
 import com.example.desainmoviereview2.MovieItem
+import com.example.desainmoviereview2.network.TmdbMovie
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -58,6 +60,7 @@ fun MovieListScreen(
     onSortByChanged: (String) -> Unit,
     onMovieClicked: (MovieItem) -> Unit,
     onSearchQueryChanged: (String) -> Unit = {},
+    onTmdbSearchConfirmed: (TmdbMovie) -> Unit = {},
     searchQuery: String = ""
 ) {
     Scaffold(
@@ -73,7 +76,7 @@ fun MovieListScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 8.dp),
-                    placeholder = { Text("Search Movies...") },
+                    placeholder = { Text("Search all movies (TMDB)...") },
                     leadingIcon = {
                         Icon(Icons.Default.Search, contentDescription = "Search")
                     },
@@ -88,12 +91,15 @@ fun MovieListScreen(
                     colors = OutlinedTextFieldDefaults.colors()
                 )
                 
-                FilterBar(
-                    currentGenre = uiState.currentGenreFilter,
-                    genres = uiState.filterGenres,
-                    onGenreSelected = onGenreFilterChanged,
-                    onSortSelected = onSortByChanged
-                )
+                // Only show filter bar when not showing TMDB results
+                if (uiState.tmdbSearchResults.isEmpty()) {
+                    FilterBar(
+                        currentGenre = uiState.currentGenreFilter,
+                        genres = uiState.filterGenres,
+                        onGenreSelected = onGenreFilterChanged,
+                        onSortSelected = onSortByChanged
+                    )
+                }
             }
         }
     ) { paddingValues ->
@@ -105,19 +111,18 @@ fun MovieListScreen(
         ) {
             if (uiState.isLoading) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            } else if (searchQuery.isNotBlank() && uiState.tmdbSearchResults.isNotEmpty()) {
+                // Show TMDB search results
+                TmdbSearchResultsList(
+                    results = uiState.tmdbSearchResults,
+                    onTmdbSearchConfirmed = onTmdbSearchConfirmed
+                )
             } else {
-                val filteredMovies = if (searchQuery.isBlank()) {
-                    uiState.movies
-                } else {
-                    uiState.movies.filter { 
-                        it.title?.contains(searchQuery, ignoreCase = true) == true 
-                    }
-                }
-                
-                if (filteredMovies.isEmpty()) {
+                // Show normal movie list
+                if (uiState.movies.isEmpty()) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Text(
-                            text = if (searchQuery.isNotBlank()) "No movies found for \"$searchQuery\"" else "No movies available",
+                            text = "No movies available",
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -127,7 +132,7 @@ fun MovieListScreen(
                         contentPadding = PaddingValues(16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        items(filteredMovies) { movie ->
+                        items(uiState.movies) { movie ->
                             MovieListItem(movie = movie, onClick = { onMovieClicked(movie) })
                         }
                     }
@@ -136,6 +141,75 @@ fun MovieListScreen(
         }
     }
 }
+
+@OptIn(ExperimentalGlideComposeApi::class)
+@Composable
+fun TmdbSearchResultsList(
+    results: List<TmdbMovie>,
+    onTmdbSearchConfirmed: (TmdbMovie) -> Unit
+) {
+    LazyColumn(
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(results) { tmdbMovie ->
+            Card(
+                onClick = { onTmdbSearchConfirmed(tmdbMovie) },
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .padding(12.dp)
+                        .height(100.dp)
+                ) {
+                    GlideImage(
+                        model = "https://image.tmdb.org/t/p/w200${tmdbMovie.posterPath}",
+                        contentDescription = tmdbMovie.title,
+                        contentScale = ContentScale.Crop,
+                        loading = placeholder {
+                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                CircularProgressIndicator(modifier = Modifier.padding(8.dp))
+                            }
+                        },
+                        failure = placeholder {
+                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                Icon(Icons.Default.ImageNotSupported, contentDescription = null)
+                            }
+                        },
+                        modifier = Modifier
+                            .width(70.dp)
+                            .fillMaxHeight()
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = tmdbMovie.title,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 2
+                        )
+                        Text(
+                            text = tmdbMovie.releaseDate?.take(4) ?: "N/A",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = tmdbMovie.overview?.take(80)?.plus("...") ?: "",
+                            style = MaterialTheme.typography.bodySmall,
+                            maxLines = 2,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
 
 @Composable
 fun FilterBar(

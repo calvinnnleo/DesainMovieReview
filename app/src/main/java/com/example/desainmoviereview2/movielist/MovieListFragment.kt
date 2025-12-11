@@ -13,9 +13,12 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.example.desainmoviereview2.MyAppTheme
 import com.example.desainmoviereview2.R
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 
 class MovieListFragment : Fragment() {
 
@@ -41,10 +44,31 @@ class MovieListFragment : Fragment() {
                             findNavController().navigate(R.id.action_global_forumFragment, bundle)
                         },
                         searchQuery = searchQuery,
-                        onSearchQueryChanged = { searchQuery = it }
+                        onSearchQueryChanged = { query ->
+                            searchQuery = query
+                            viewModel.searchMovies(query)
+                        },
+                        onTmdbSearchConfirmed = { tmdbMovie ->
+                            viewModel.onSearchConfirmed(tmdbMovie)
+                        }
                     )
                 }
             }
         }
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        viewModel.navigationEvent.onEach { event ->
+            when (event) {
+                is MovieListNavigationEvent.ToRecommendation -> {
+                    val action = MovieListFragmentDirections.actionMovieListFragmentToRecommendationFragment(event.imdbId)
+                    findNavController().navigate(action)
+                    viewModel.onNavigated()
+                }
+                null -> {}
+            }
+        }.launchIn(viewLifecycleOwner.lifecycleScope)
     }
 }
