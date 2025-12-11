@@ -44,8 +44,7 @@ fun HomeScreen(
     onMovieClicked: (MovieItem) -> Unit,
     onMovieLongClicked: (MovieItem) -> Unit,
     onSearchConfirmed: (TmdbMovie) -> Unit,
-    onClearSearchResults: () -> Unit,
-    onGenreSelected: (String) -> Unit = {}
+    onClearSearchResults: () -> Unit
 ) {
     Column(modifier = Modifier
         .fillMaxSize()
@@ -76,7 +75,7 @@ fun HomeScreen(
                 if (searchQuery.isNotBlank() && uiState.searchResults.isNotEmpty()) {
                     SearchList(uiState.searchResults, onSearchConfirmed)
                 } else {
-                    MainContent(uiState, onMovieClicked, onMovieLongClicked, onGenreSelected)
+                    MainContent(uiState, onMovieClicked, onMovieLongClicked)
                 }
             }
             is HomeUiState.Error -> {
@@ -132,8 +131,7 @@ fun SearchTextField(
 fun MainContent(
     uiState: HomeUiState.Success,
     onMovieClicked: (MovieItem) -> Unit,
-    onMovieLongClicked: (MovieItem) -> Unit,
-    onGenreSelected: (String) -> Unit
+    onMovieLongClicked: (MovieItem) -> Unit
 ) {
     LazyColumn {
         // Banner Pager
@@ -234,45 +232,23 @@ fun MainContent(
             }
         }
 
-        // Browse by Genre Section
-        item {
-            Text(
-                text = "🎭 Browse by Genre",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier
-                    .padding(top = 24.dp, bottom = 8.dp, start = 16.dp, end = 16.dp)
-            )
-        }
-
-        // Genre Chips
-        item {
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(uiState.genres) { genre ->
-                    FilterChip(
-                        selected = uiState.selectedGenre == genre,
-                        onClick = { onGenreSelected(genre) },
-                        label = { Text(genre) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primary,
-                            selectedLabelColor = MaterialTheme.colorScheme.onPrimary
-                        )
-                    )
-                }
+        // Action Movies Section
+        if (uiState.actionMovies.isNotEmpty()) {
+            item {
+                Text(
+                    text = "🔥 Action",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier
+                        .padding(top = 24.dp, bottom = 8.dp, start = 16.dp, end = 16.dp)
+                )
             }
-        }
 
-        // Movies by Genre
-        if (uiState.moviesByGenre.isNotEmpty()) {
             item {
                 LazyRow(
-                    contentPadding = PaddingValues(horizontal = 8.dp),
-                    modifier = Modifier.padding(top = 8.dp)
+                    contentPadding = PaddingValues(horizontal = 8.dp)
                 ) {
-                    items(uiState.moviesByGenre) { movie ->
+                    items(uiState.actionMovies) { movie ->
                         MovieCard(
                             movie = movie,
                             onClick = { onMovieClicked(movie) },
@@ -281,16 +257,86 @@ fun MainContent(
                     }
                 }
             }
-        } else {
+        }
+
+        // Comedy Movies Section
+        if (uiState.comedyMovies.isNotEmpty()) {
             item {
                 Text(
-                    text = "No movies found for ${uiState.selectedGenre}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    text = "😂 Comedy",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier
-                        .padding(16.dp)
-                        .fillMaxWidth()
+                        .padding(top = 24.dp, bottom = 8.dp, start = 16.dp, end = 16.dp)
                 )
+            }
+
+            item {
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 8.dp)
+                ) {
+                    items(uiState.comedyMovies) { movie ->
+                        MovieCard(
+                            movie = movie,
+                            onClick = { onMovieClicked(movie) },
+                            onLongClick = { onMovieLongClicked(movie) }
+                        )
+                    }
+                }
+            }
+        }
+
+        // Drama Movies Section
+        if (uiState.dramaMovies.isNotEmpty()) {
+            item {
+                Text(
+                    text = "🎭 Drama",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier
+                        .padding(top = 24.dp, bottom = 8.dp, start = 16.dp, end = 16.dp)
+                )
+            }
+
+            item {
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 8.dp)
+                ) {
+                    items(uiState.dramaMovies) { movie ->
+                        MovieCard(
+                            movie = movie,
+                            onClick = { onMovieClicked(movie) },
+                            onLongClick = { onMovieLongClicked(movie) }
+                        )
+                    }
+                }
+            }
+        }
+
+        // Horror Movies Section
+        if (uiState.horrorMovies.isNotEmpty()) {
+            item {
+                Text(
+                    text = "👻 Horror",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier
+                        .padding(top = 24.dp, bottom = 8.dp, start = 16.dp, end = 16.dp)
+                )
+            }
+
+            item {
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 8.dp)
+                ) {
+                    items(uiState.horrorMovies) { movie ->
+                        MovieCard(
+                            movie = movie,
+                            onClick = { onMovieClicked(movie) },
+                            onLongClick = { onMovieLongClicked(movie) }
+                        )
+                    }
+                }
             }
         }
 

@@ -47,9 +47,6 @@ class HomeFragment : Fragment() {
                         },
                         onClearSearchResults = {
                             viewModel.clearSearchResults()
-                        },
-                        onGenreSelected = { genre ->
-                            viewModel.onGenreSelected(genre)
                         }
                     )
                 }

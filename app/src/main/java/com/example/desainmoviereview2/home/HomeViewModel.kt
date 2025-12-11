@@ -63,10 +63,24 @@ class HomeViewModel : ViewModel() {
                     .sortedByDescending { it.rating }
                     .take(10)
 
-                // Movies by Genre - default to "Action"
-                val defaultGenre = "Action"
-                val moviesByGenre = allMovies
-                    .filter { it.genres?.contains(defaultGenre, ignoreCase = true) == true }
+                // Genre-specific movie lists
+                val comedyMovies = allMovies
+                    .filter { it.genres?.contains("Comedy", ignoreCase = true) == true }
+                    .sortedByDescending { it.rating }
+                    .take(10)
+
+                val dramaMovies = allMovies
+                    .filter { it.genres?.contains("Drama", ignoreCase = true) == true }
+                    .sortedByDescending { it.rating }
+                    .take(10)
+
+                val horrorMovies = allMovies
+                    .filter { it.genres?.contains("Horror", ignoreCase = true) == true }
+                    .sortedByDescending { it.rating }
+                    .take(10)
+
+                val actionMovies = allMovies
+                    .filter { it.genres?.contains("Action", ignoreCase = true) == true }
                     .sortedByDescending { it.rating }
                     .take(10)
 
@@ -75,8 +89,10 @@ class HomeViewModel : ViewModel() {
                     movies = movieList, 
                     searchResults = emptyList(),
                     topRatedMovies = topRatedMovies,
-                    selectedGenre = defaultGenre,
-                    moviesByGenre = moviesByGenre
+                    comedyMovies = comedyMovies,
+                    dramaMovies = dramaMovies,
+                    horrorMovies = horrorMovies,
+                    actionMovies = actionMovies
                 )
             }
 
@@ -84,20 +100,6 @@ class HomeViewModel : ViewModel() {
                 _uiState.value = HomeUiState.Error(error.message)
             }
         })
-    }
-
-    fun onGenreSelected(genre: String) {
-        val currentState = _uiState.value
-        if (currentState is HomeUiState.Success) {
-            val moviesByGenre = allMovies
-                .filter { it.genres?.contains(genre, ignoreCase = true) == true }
-                .sortedByDescending { it.rating }
-                .take(10)
-            _uiState.value = currentState.copy(
-                selectedGenre = genre,
-                moviesByGenre = moviesByGenre
-            )
-        }
     }
 
 
@@ -208,9 +210,10 @@ sealed class HomeUiState {
         val movies: List<MovieItem>, 
         val searchResults: List<TmdbMovie>,
         val topRatedMovies: List<MovieItem> = emptyList(),
-        val genres: List<String> = listOf("Action", "Comedy", "Drama", "Horror", "Thriller", "Sci-Fi", "Romance"),
-        val selectedGenre: String = "Action",
-        val moviesByGenre: List<MovieItem> = emptyList()
+        val comedyMovies: List<MovieItem> = emptyList(),
+        val dramaMovies: List<MovieItem> = emptyList(),
+        val horrorMovies: List<MovieItem> = emptyList(),
+        val actionMovies: List<MovieItem> = emptyList()
     ) : HomeUiState()
     data class Error(val message: String) : HomeUiState()
 }
