@@ -57,31 +57,41 @@ class HomeViewModel : ViewModel() {
                     movieList = emptyList()
                 }
 
-                // Top Rated Movies - sorted by rating descending
+                // Top Rated Movies - sorted by num_votes and rating descending
                 val topRatedMovies = allMovies
                     .filter { (it.rating ?: 0.0) >= 7.0 }
-                    .sortedByDescending { it.rating }
+                    .sortedWith(
+                        compareByDescending<MovieItem> { it.num_votes ?: 0.0 }.thenByDescending { it.rating ?: 0.0 }
+                    )
                     .take(10)
 
                 // Genre-specific movie lists
                 val comedyMovies = allMovies
                     .filter { it.genres?.contains("Comedy", ignoreCase = true) == true }
-                    .sortedByDescending { it.rating }
+                    .sortedWith(
+                        compareByDescending<MovieItem> { it.num_votes ?: 0.0 }.thenByDescending { it.rating ?: 0.0 }
+                    )
                     .take(10)
 
                 val dramaMovies = allMovies
                     .filter { it.genres?.contains("Drama", ignoreCase = true) == true }
-                    .sortedByDescending { it.rating }
+                    .sortedWith(
+                        compareByDescending<MovieItem> { it.num_votes ?: 0.0 }.thenByDescending { it.rating ?: 0.0 }
+                    )
                     .take(10)
 
                 val horrorMovies = allMovies
                     .filter { it.genres?.contains("Horror", ignoreCase = true) == true }
-                    .sortedByDescending { it.rating }
+                    .sortedWith(
+                        compareByDescending<MovieItem> { it.num_votes ?: 0.0 }.thenByDescending { it.rating ?: 0.0 }
+                    )
                     .take(10)
 
                 val actionMovies = allMovies
                     .filter { it.genres?.contains("Action", ignoreCase = true) == true }
-                    .sortedByDescending { it.rating }
+                    .sortedWith(
+                        compareByDescending<MovieItem> { it.num_votes ?: 0.0 }.thenByDescending { it.rating ?: 0.0 }
+                    )
                     .take(10)
 
                 _uiState.value = HomeUiState.Success(
