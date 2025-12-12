@@ -51,7 +51,6 @@ fun HomeScreen(
         .background(MaterialTheme.colorScheme.background)
     ) {
         var searchQuery by remember { mutableStateOf("") }
-
         SearchTextField(
             query = searchQuery,
             onQueryChange = {
@@ -64,7 +63,6 @@ fun HomeScreen(
             },
             modifier = Modifier.padding(16.dp)
         )
-
         when (uiState) {
             is HomeUiState.Loading -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -204,6 +202,139 @@ fun MainContent(
                 }
             }
         }
+        // Top Rated Movies Section
+        if (uiState.topRatedMovies.isNotEmpty()) {
+            item {
+                Text(
+                    text = "⭐ Top Rated Movies",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier
+                        .padding(top = 24.dp, bottom = 8.dp, start = 16.dp, end = 16.dp)
+                )
+            }
+
+            item {
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 8.dp)
+                ) {
+                    items(uiState.topRatedMovies) { movie ->
+                        MovieCard(
+                            movie = movie,
+                            onClick = { onMovieClicked(movie) },
+                            onLongClick = { onMovieLongClicked(movie) }
+                        )
+                    }
+                }
+            }
+        }
+        // Action Movies Section
+        if (uiState.actionMovies.isNotEmpty()) {
+            item {
+                Text(
+                    text = "🔥 Action",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier
+                        .padding(top = 24.dp, bottom = 8.dp, start = 16.dp, end = 16.dp)
+                )
+            }
+
+            item {
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 8.dp)
+                ) {
+                    items(uiState.actionMovies) { movie ->
+                        MovieCard(
+                            movie = movie,
+                            onClick = { onMovieClicked(movie) },
+                            onLongClick = { onMovieLongClicked(movie) }
+                        )
+                    }
+                }
+            }
+        }
+
+        // Comedy Movies Section
+        if (uiState.comedyMovies.isNotEmpty()) {
+            item {
+                Text(
+                    text = "😂 Comedy",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier
+                        .padding(top = 24.dp, bottom = 8.dp, start = 16.dp, end = 16.dp)
+                )
+            }
+
+            item {
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 8.dp)
+                ) {
+                    items(uiState.comedyMovies) { movie ->
+                        MovieCard(
+                            movie = movie,
+                            onClick = { onMovieClicked(movie) },
+                            onLongClick = { onMovieLongClicked(movie) }
+                        )
+                    }
+                }
+            }
+        }
+
+        // Drama Movies Section
+        if (uiState.dramaMovies.isNotEmpty()) {
+            item {
+                Text(
+                    text = "🎭 Drama",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier
+                        .padding(top = 24.dp, bottom = 8.dp, start = 16.dp, end = 16.dp)
+                )
+            }
+
+            item {
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 8.dp)
+                ) {
+                    items(uiState.dramaMovies) { movie ->
+                        MovieCard(
+                            movie = movie,
+                            onClick = { onMovieClicked(movie) },
+                            onLongClick = { onMovieLongClicked(movie) }
+                        )
+                    }
+                }
+            }
+        }
+
+        // Horror Movies Section
+        if (uiState.horrorMovies.isNotEmpty()) {
+            item {
+                Text(
+                    text = "👻 Horror",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier
+                        .padding(top = 24.dp, bottom = 8.dp, start = 16.dp, end = 16.dp)
+                )
+            }
+
+            item {
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 8.dp)
+                ) {
+                    items(uiState.horrorMovies) { movie ->
+                        MovieCard(
+                            movie = movie,
+                            onClick = { onMovieClicked(movie) },
+                            onLongClick = { onMovieLongClicked(movie) }
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -278,33 +409,5 @@ fun MovieCard(
                 contentScale = ContentScale.Crop
             )
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun HomeScreenSuccessPreview() {
-    MyAppTheme {
-        HomeScreen(
-            uiState = HomeUiState.Success(
-                banners = listOf(
-                    MovieItem(title = "Banner Movie 1", primary_image_url = "", rating = 8.5),
-                    MovieItem(title = "Banner Movie 2", primary_image_url = "", rating = 7.9)
-                ),
-                movies = List(5) {
-                    MovieItem(
-                        title = "Recommended Movie ${it + 1}",
-                        primary_image_url = "",
-                        rating = (8 - it * 0.5)
-                    )
-                },
-                searchResults = emptyList()
-            ),
-            onSearchQueryChanged = {},
-            onMovieClicked = {},
-            onMovieLongClicked = {},
-            onSearchConfirmed = {},
-            onClearSearchResults = {}
-        )
     }
 }

@@ -25,6 +25,8 @@ class HomeViewModel : ViewModel() {
     private val _navigationEvent = MutableStateFlow<NavigationEvent?>(null)
     val navigationEvent: StateFlow<NavigationEvent?> = _navigationEvent.asStateFlow()
 
+    private var allMovies = mutableListOf<MovieItem>()
+
     init {
         fetchMovies()
     }
@@ -37,6 +39,7 @@ class HomeViewModel : ViewModel() {
                     val movie = parseMovie(movieSnapshot)
                     if (movie != null) newMovies.add(movie)
                 }
+                allMovies = newMovies
 
                 val currentYear = Calendar.getInstance().get(Calendar.YEAR)
                 val moviesFromCurrentYear = newMovies.filter { it.year?.toIntOrNull() == currentYear }
@@ -58,7 +61,56 @@ class HomeViewModel : ViewModel() {
                     movieList = emptyList()
                 }
 
-                _uiState.value = HomeUiState.Success(banners, movieList, emptyList())
+                // Top Rated Movies - sorted by num_votes and rating descending
+                val topRatedMovies = allMovies
+                    .filter { (it.rating ?: 0.0) >= 7.0 }
+                    .sortedWith(
+                        compareByDescending<MovieItem> { it.num_votes ?: 0.0 }.thenByDescending { it.rating ?: 0.0 }
+                    )
+                    .take(10)
+
+                // Genre-specific movie lists
+                val comedyMovies = allMovies
+                    .filter { it.genres?.contains("Comedy", ignoreCase = true) == true }
+                    .sortedWith(
+                        compareByDescending<MovieItem> { it.num_votes ?: 0.0 }.thenByDescending { it.rating ?: 0.0 }
+                    )
+                    .take(10)
+
+                val dramaMovies = allMovies
+                    .filter { it.genres?.contains("Drama", ignoreCase = true) == true }
+                    .sortedWith(
+                        compareByDescending<MovieItem> { it.num_votes ?: 0.0 }.thenByDescending { it.rating ?: 0.0 }
+                    )
+                    .take(10)
+
+                val horrorMovies = allMovies
+                    .filter { it.genres?.contains("Horror", ignoreCase = true) == true }
+                    .sortedWith(
+                        compareByDescending<MovieItem> { it.num_votes ?: 0.0 }.thenByDescending { it.rating ?: 0.0 }
+                    )
+                    .take(10)
+
+                val actionMovies = allMovies
+                    .filter { it.genres?.contains("Action", ignoreCase = true) == true }
+                    .sortedWith(
+                        compareByDescending<MovieItem> { it.num_votes ?: 0.0 }.thenByDescending { it.rating ?: 0.0 }
+                    )
+                    .take(10)
+
+                val currentState = _uiState.value
+                val searchResults = if (currentState is HomeUiState.Success) currentState.searchResults else emptyList()
+
+                _uiState.value = HomeUiState.Success(
+                    banners = banners,
+                    movies = movieList,
+                    searchResults = searchResults,
+                    topRatedMovies = topRatedMovies,
+                    comedyMovies = comedyMovies,
+                    dramaMovies = dramaMovies,
+                    horrorMovies = horrorMovies,
+                    actionMovies = actionMovies
+                )
             }
 
             override fun onCancelled(error: DatabaseError) {
@@ -169,7 +221,16 @@ class HomeViewModel : ViewModel() {
 
 sealed class HomeUiState {
     object Loading : HomeUiState()
-    data class Success(val banners: List<MovieItem>, val movies: List<MovieItem>, val searchResults: List<TmdbMovie>) : HomeUiState()
+    data class Success(
+        val banners: List<MovieItem>,
+        val movies: List<MovieItem>,
+        val searchResults: List<TmdbMovie>,
+        val topRatedMovies: List<MovieItem>,
+        val actionMovies: List<MovieItem>,
+        val comedyMovies: List<MovieItem>,
+        val dramaMovies: List<MovieItem>,
+        val horrorMovies: List<MovieItem>
+    ) : HomeUiState()
     data class Error(val message: String) : HomeUiState()
 }
 
