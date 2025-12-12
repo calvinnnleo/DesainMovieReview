@@ -1,21 +1,22 @@
 package com.example.desainmoviereview2
 
-import android.Manifest
-import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
+import android.Manifest
 import android.os.Bundle
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
+import android.widget.Toast
+import android.content.Intent
+import android.provider.Settings
+import android.content.pm.PackageManager
 import androidx.core.content.ContextCompat
+import com.google.firebase.auth.FirebaseAuth
+import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.fragment.NavHostFragment
+import com.google.android.material.snackbar.Snackbar
+import androidx.activity.result.contract.ActivityResultContracts
 import com.example.desainmoviereview2.databinding.ActivityMainBinding
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import com.google.firebase.auth.FirebaseAuth
 
-/**
- * The main activity of the application.
- * This activity hosts the NavHostFragment and handles the bottom navigation.
- */
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
@@ -25,9 +26,18 @@ class MainActivity : AppCompatActivity() {
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         if (isGranted) {
-            // FCM SDK (and your app) can post notifications.
+            Toast.makeText(this, "Notifikasi diaktifkan! Anda akan menerima update film.", Toast.LENGTH_SHORT).show()
         } else {
-            // Inform user that your app will not show notifications.
+            Snackbar.make(
+                binding.root,
+                "Izin notifikasi ditolak. Anda mungkin melewatkan rekomendasi film terbaru.",
+                Snackbar.LENGTH_LONG
+            ).setAction("Atur Izin") {
+                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                    data = Uri.fromParts("package", packageName, null)
+                }
+                startActivity(intent)
+            }.show()
         }
     }
 
@@ -58,7 +68,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Set up the bottom navigation listener
-        bottomNav.setOnNavigationItemSelectedListener { item ->
+        bottomNav.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.homeFragment -> {
                     navController.navigate(R.id.homeFragment)

@@ -41,10 +41,8 @@ class SplashFragment : Fragment() {
 
     private fun checkUserStatus() {
         if (auth.currentUser != null) {
-            // If the user is logged in, navigate to the home fragment
             findNavController().navigate(R.id.action_splashFragment_to_homeFragment)
         } else {
-            // If the user is not logged in, navigate to the login fragment
             findNavController().navigate(R.id.action_splashFragment_to_loginFragment)
         }
     }

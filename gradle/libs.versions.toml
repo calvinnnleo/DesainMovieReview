@@ -1,5 +1,5 @@
 [versions]
-agp = "8.13.1"
+agp = "8.13.2"
 glideTransformations = "4.3.0"
 kotlin = "2.2.20"
 coreKtx = "1.17.0"
@@ -24,6 +24,7 @@ material = "1.13.0"
 navigationFragmentKtx = "2.9.5"
 navigationUiKtx = "2.9.5"
 viewpager2 = "1.1.0"
+runtime = "1.10.0"
 
 [libraries]
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
@@ -55,6 +56,7 @@ androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-co
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 androidx-navigation-fragment-ktx = { group = "androidx.navigation", name = "navigation-fragment-ktx", version.ref = "navigationFragmentKtx" }
 androidx-navigation-ui-ktx = { group = "androidx.navigation", name = "navigation-ui-ktx", version.ref = "navigationUiKtx" }
+androidx-runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = "runtime" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

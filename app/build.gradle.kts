@@ -71,6 +71,7 @@ dependencies {
     implementation(libs.firebase.messaging)
     implementation(libs.firebase.appcheck)
     implementation(libs.firebase.appcheck.playintegrity)
+    implementation(libs.androidx.runtime)
     debugImplementation(libs.firebase.appcheck.debug)
 
     // Glide for image loading
