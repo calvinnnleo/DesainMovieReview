@@ -10,7 +10,7 @@ googleServices = "4.4.2"
 glide = "4.16.0"
 navigationSafeArgs = "2.9.5"
 kotlinCompilerExtension = "1.5.1"
-accompanist = "0.32.0"
+accompanist = "0.36.0"
 
 # Unchanged versions
 appcompat = "1.7.1"

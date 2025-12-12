@@ -67,7 +67,7 @@
 
     <fragment
         android:id="@+id/recommendationFragment"
-        android:name="com.example.desainmoviereview2.RecommendationFragment"
+        android:name="com.example.desainmoviereview2.recommendation.RecommendationFragment"
         android:label="RecommendationFragment"
         tools:layout="@layout/fragment_recommendation">
         <argument

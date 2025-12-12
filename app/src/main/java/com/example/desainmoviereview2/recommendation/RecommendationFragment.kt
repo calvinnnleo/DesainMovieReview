@@ -15,7 +15,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
-import com.example.desainmoviereview2.RecommendationFragmentArgs
 import com.example.desainmoviereview2.MyAppTheme
 import com.example.desainmoviereview2.R
 
