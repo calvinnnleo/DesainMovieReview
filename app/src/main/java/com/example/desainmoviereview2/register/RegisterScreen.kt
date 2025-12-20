@@ -7,16 +7,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import com.example.desainmoviereview2.Screen
 
 @Composable
 fun RegisterScreen(
-    onRegisterClick: (String, String, String, String) -> Unit,
-    onGoToLoginClick: () -> Unit
+    navController: NavController,
+    registerViewModel: RegisterViewModel = viewModel()
 ) {
-    var fullName by remember { mutableStateOf("") }
-    var username by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+    val uiState by registerViewModel.uiState.collectAsState()
+
+    if (uiState.registrationSuccess) {
+        navController.navigate(Screen.Login.route) {
+            popUpTo(Screen.Register.route) { inclusive = true }
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -26,54 +32,68 @@ fun RegisterScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         OutlinedTextField(
-            value = fullName,
-            onValueChange = { fullName = it },
+            value = uiState.fullName,
+            onValueChange = registerViewModel::onFullNameChange,
             label = { Text("Full Name") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !uiState.isLoading
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
-            value = username,
-            onValueChange = { username = it },
+            value = uiState.username,
+            onValueChange = registerViewModel::onUsernameChange,
             label = { Text("Username") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !uiState.isLoading
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
-            value = email,
-            onValueChange = { email = it },
+            value = uiState.email,
+            onValueChange = registerViewModel::onEmailChange,
             label = { Text("Email") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !uiState.isLoading
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
+            value = uiState.password,
+            onValueChange = registerViewModel::onPasswordChange,
             label = { Text("Password") },
             visualTransformation = PasswordVisualTransformation(),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !uiState.isLoading
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
-            onClick = { onRegisterClick(fullName, username, email, password) },
-            modifier = Modifier.fillMaxWidth()
+            onClick = { registerViewModel.registerUser() },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !uiState.isLoading
         ) {
             Text("Register")
         }
 
         TextButton(
-            onClick = onGoToLoginClick,
-            modifier = Modifier.fillMaxWidth()
+            onClick = { navController.navigate(Screen.Login.route) },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !uiState.isLoading
         ) {
             Text("Already have an account? Login")
+        }
+
+        uiState.error?.let {
+            Text(it, color = MaterialTheme.colorScheme.error)
+        }
+
+        if (uiState.isLoading) {
+            CircularProgressIndicator()
         }
     }
 }

@@ -9,16 +9,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.example.desainmoviereview2.MyAppTheme
+import com.example.desainmoviereview2.Screen
 
 @Composable
 fun LoginScreen(
-    uiState: LoginUiState,
-    onEmailChange: (String) -> Unit,
-    onPasswordChange: (String) -> Unit,
-    onLoginClick: () -> Unit,
-    onGoToRegisterClick: () -> Unit
+    navController: NavController,
+    loginViewModel: LoginViewModel = viewModel()
 ) {
+    val uiState by loginViewModel.uiState.collectAsState()
+
+    if (uiState.loginSuccess) {
+        navController.navigate(Screen.Home.route) {
+            popUpTo(Screen.Login.route) { inclusive = true }
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -34,7 +42,7 @@ fun LoginScreen(
         ) {
             OutlinedTextField(
                 value = uiState.email,
-                onValueChange = onEmailChange,
+                onValueChange = loginViewModel::onEmailChange,
                 label = { Text("Email") },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !uiState.isLoading
@@ -44,7 +52,7 @@ fun LoginScreen(
 
             OutlinedTextField(
                 value = uiState.password,
-                onValueChange = onPasswordChange,
+                onValueChange = loginViewModel::onPasswordChange,
                 label = { Text("Password") },
                 visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier.fillMaxWidth(),
@@ -54,7 +62,7 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(
-                onClick = onLoginClick,
+                onClick = { loginViewModel.loginUser() },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !uiState.isLoading
             ) {
@@ -62,44 +70,20 @@ fun LoginScreen(
             }
 
             TextButton(
-                onClick = onGoToRegisterClick,
+                onClick = { navController.navigate(Screen.Register.route) },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !uiState.isLoading
             ) {
                 Text("Don't have an account? Register")
+            }
+
+            uiState.error?.let {
+                Text(it, color = MaterialTheme.colorScheme.error)
             }
         }
 
         if (uiState.isLoading) {
             CircularProgressIndicator()
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun LoginScreenPreview() {
-    MyAppTheme {
-        LoginScreen(
-            uiState = LoginUiState(isLoading = false),
-            onEmailChange = {},
-            onPasswordChange = {},
-            onLoginClick = {},
-            onGoToRegisterClick = {}
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun LoginScreenLoadingPreview() {
-    MyAppTheme {
-        LoginScreen(
-            uiState = LoginUiState(isLoading = true),
-            onEmailChange = {},
-            onPasswordChange = {},
-            onLoginClick = {},
-            onGoToRegisterClick = {}
-        )
     }
 }

@@ -1,6 +1,7 @@
 package com.example.desainmoviereview2.forum
 
 import android.util.Log
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.desainmoviereview2.MovieItem
@@ -13,15 +14,20 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
-class ForumViewModel : ViewModel() {
+class ForumViewModel(savedStateHandle: SavedStateHandle) : ViewModel() {
 
+    private val movieId: String = savedStateHandle.get<String>("movieId")!!
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
     private val db = FirebaseDatabase.getInstance("https://movie-recommendation-b7ce0-default-rtdb.asia-southeast1.firebasedatabase.app")
     private val forumPostsRef: DatabaseReference = db.getReference("forum_posts")
+    private val moviesRef: DatabaseReference = db.getReference("movies")
     private val usersRef: DatabaseReference = db.getReference("users")
 
     private val _posts = MutableStateFlow<List<ForumPost>>(emptyList())
     val posts: StateFlow<List<ForumPost>> = _posts.asStateFlow()
+
+    private val _movieItem = MutableStateFlow<MovieItem?>(null)
+    val movieItem: StateFlow<MovieItem?> = _movieItem.asStateFlow()
 
     private val _currentUserId = MutableStateFlow<String?>(null)
     val currentUserId: StateFlow<String?> = _currentUserId.asStateFlow()
@@ -34,10 +40,19 @@ class ForumViewModel : ViewModel() {
         auth.addAuthStateListener { firebaseAuth ->
             _currentUserId.value = firebaseAuth.currentUser?.uid
         }
+        fetchMovieItem()
+        fetchForumPosts(movieId)
     }
 
-    fun initialize(movieItem: MovieItem?) {
-        fetchForumPosts(movieItem?.movie_id)
+    private fun fetchMovieItem() {
+        viewModelScope.launch {
+            try {
+                val snapshot = moviesRef.child(movieId).get().await()
+                _movieItem.value = parseMovie(snapshot)
+            } catch (e: Exception) {
+                Log.e("ForumViewModel", "Error fetching movie item", e)
+            }
+        }
     }
 
     private fun fetchForumPosts(movieId: String?) {
@@ -65,10 +80,9 @@ class ForumViewModel : ViewModel() {
         query?.addValueEventListener(valueEventListener!!)
     }
 
-    fun submitNewPost(content: String, rating: Int, movieItem: MovieItem?) {
+    fun submitNewPost(content: String, rating: Int) {
         viewModelScope.launch {
             val user = auth.currentUser ?: return@launch
-            val currentMovieId = movieItem?.movie_id
 
             if (content.isEmpty()) return@launch
 
@@ -83,7 +97,7 @@ class ForumViewModel : ViewModel() {
 
                 val postMap = mapOf(
                     "post_id" to postId,
-                    "movie_id" to currentMovieId,
+                    "movie_id" to movieId,
                     "content" to content,
                     "author_uid" to user.uid,
                     "author_username" to username,
@@ -157,6 +171,33 @@ class ForumViewModel : ViewModel() {
 
     fun deleteReply(post: ForumPost, reply: Reply) {
         forumPostsRef.child(post.post_id!!).child("replies").child(reply.post_id!!).removeValue()
+    }
+
+    private fun parseMovie(movieSnapshot: DataSnapshot): MovieItem? {
+        val movieMap = movieSnapshot.getValue(object : GenericTypeIndicator<Map<String, Any?>>() {})
+        return if (movieMap != null) {
+            val rating = (movieMap["rating"] as? Number)?.toDouble()
+            val numVotes = (movieMap["num_votes"] as? Number)?.toDouble()
+            val runtimeMinutes = (movieMap["runtime_minutes"] as? Number)?.toDouble()
+
+            MovieItem(
+                movie_id = movieSnapshot.key,
+                title = movieMap["title"] as? String,
+                year = movieMap["year"],
+                rating = rating,
+                num_votes = numVotes,
+                runtime_minutes = runtimeMinutes,
+                directors = movieMap["directors"] as? String,
+                writers = movieMap["writers"] as? String,
+                genres = movieMap["genres"] as? String,
+                overview = movieMap["overview"] as? String,
+                crew = movieMap["crew"] as? String,
+                primary_image_url = movieMap["primary_image_url"] as? String,
+                thumbnail_url = movieMap["thumbnail_url"] as? String
+            )
+        } else {
+            null
+        }
     }
 
     private fun parseForumPost(postSnapshot: DataSnapshot): ForumPost? {

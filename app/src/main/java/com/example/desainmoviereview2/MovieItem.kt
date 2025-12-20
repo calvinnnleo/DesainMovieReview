@@ -1,8 +1,10 @@
 package com.example.desainmoviereview2
 
 import android.os.Parcelable
+import com.google.firebase.database.Exclude
 import com.google.firebase.database.IgnoreExtraProperties
 import kotlinx.parcelize.Parcelize
+import kotlinx.parcelize.RawValue
 
 /**
  * Data class for a movie item.
@@ -12,7 +14,7 @@ import kotlinx.parcelize.Parcelize
 data class MovieItem(
     var movie_id: String? = null,
     val title: String? = null,
-    val year: String? = null,
+    val year: @RawValue Any? = null,
     val rating: Double? = null,
     val num_votes: Double? = null,
     val runtime_minutes: Double? = null,
@@ -23,4 +25,13 @@ data class MovieItem(
     val crew: String? = null,
     val primary_image_url: String? = null,
     val thumbnail_url: String? = null
-) : Parcelable
+) : Parcelable {
+    @Exclude
+    fun getYearString(): String? {
+        return when (year) {
+            is String -> year
+            is Long -> year.toString()
+            else -> null
+        }
+    }
+}

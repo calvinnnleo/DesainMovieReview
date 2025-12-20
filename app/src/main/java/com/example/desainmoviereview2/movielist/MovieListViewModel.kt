@@ -63,7 +63,7 @@ class MovieListViewModel : ViewModel() {
         val sorted = when (currentState.currentSortBy) {
             "Default" -> filtered.sortedWith(compareByDescending<MovieItem> { it.num_votes }.thenByDescending { it.rating })
             "Rating" -> filtered.sortedByDescending { it.rating }
-            "Newest" -> filtered.sortedByDescending { it.year?.toIntOrNull() }
+            "Newest" -> filtered.sortedByDescending { it.getYearString()?.toIntOrNull() }
             else -> filtered.sortedByDescending { it.title }
         }
 
@@ -85,7 +85,7 @@ class MovieListViewModel : ViewModel() {
             MovieItem(
                 movie_id = movieSnapshot.key,
                 title = movieMap["title"] as? String,
-                year = movieMap["year"]?.toString(),
+                year = movieMap["year"],
                 rating = rating,
                 num_votes = numVotes,
                 runtime_minutes = runtimeMinutes,

@@ -30,6 +30,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.example.desainmoviereview2.R
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -49,6 +50,7 @@ fun ProfileScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+    val userEmail = remember { FirebaseAuth.getInstance().currentUser?.email ?: "" }
     
     // Image Picking Logic
     var tempImageUri by remember { mutableStateOf<Uri?>(null) }
@@ -184,10 +186,11 @@ fun ProfileScreen(
                 
                 // Email (Read-only)
                 OutlinedTextField(
-                    value = uiState.user.email,
+                    value = userEmail,
                     onValueChange = {},
                     label = { Text("Email") },
                     readOnly = true,
+                    enabled = false,
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )

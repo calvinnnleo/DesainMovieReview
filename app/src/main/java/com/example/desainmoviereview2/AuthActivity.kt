@@ -1,11 +1,16 @@
 package com.example.desainmoviereview2
 
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 
-class AuthActivity : AppCompatActivity() {
+class AuthActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_auth)
+        setContent {
+            MyAppTheme {
+                AuthNavigation()
+            }
+        }
     }
 }

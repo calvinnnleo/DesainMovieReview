@@ -39,12 +39,19 @@ class ProfileViewModel : ViewModel() {
 
     fun loadUserProfile() {
         val userId = auth.currentUser?.uid
+        val currentUserEmail = auth.currentUser?.email
+
         if (userId == null) {
              _uiState.update { it.copy(errorMessage = "User not logged in") }
              return
         }
 
-        _uiState.update { it.copy(isLoading = true) }
+        _uiState.update { 
+            it.copy(
+                isLoading = true,
+                user = it.user.copy(email = currentUserEmail ?: it.user.email)
+            ) 
+        }
 
         database.child("users").child(userId).get().addOnSuccessListener { dataSnapshot ->
             if (dataSnapshot.exists()) {
@@ -52,7 +59,7 @@ class ProfileViewModel : ViewModel() {
                 if (userProfile != null) {
                     originalUsername = userProfile.username
                     originalAvatarBase64 = userProfile.avatarBase64
-                    val email = auth.currentUser?.email ?: userProfile.email
+                    val email = currentUserEmail ?: userProfile.email
                     val updatedUser = userProfile.copy(email = email)
                     
                     _uiState.update { 
@@ -134,7 +141,12 @@ class ProfileViewModel : ViewModel() {
                      loadUserProfile() 
                  }
              }.addOnFailureListener { e ->
-                 _uiState.update { it.copy(isLoading = false, errorMessage = "Error updating profile: ${e.message}") }
+                 val msg = if (e.message?.contains("Permission denied", ignoreCase = true) == true) {
+                     "Permission denied. Check Firebase Rules or App Check Debug Token."
+                 } else {
+                     "Error updating profile: ${e.message}"
+                 }
+                 _uiState.update { it.copy(isLoading = false, errorMessage = msg) }
              }
         } else {
             _uiState.update { it.copy(isLoading = false) }

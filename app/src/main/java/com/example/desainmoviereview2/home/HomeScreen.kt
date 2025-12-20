@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -17,68 +18,99 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.ImageNotSupported
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
 import com.example.desainmoviereview2.MovieItem
+import com.example.desainmoviereview2.Screen
 import com.example.desainmoviereview2.network.TmdbMovie
 import kotlinx.coroutines.delay
-import com.example.desainmoviereview2.MyAppTheme
-
+import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HomeScreen(
-    uiState: HomeUiState,
-    onSearchQueryChanged: (String) -> Unit,
-    onMovieClicked: (MovieItem) -> Unit,
-    onMovieLongClicked: (MovieItem) -> Unit,
-    onSearchConfirmed: (TmdbMovie) -> Unit,
-    onClearSearchResults: () -> Unit
+    navController: NavController,
+    homeViewModel: HomeViewModel = viewModel()
 ) {
-    Column(modifier = Modifier
-        .fillMaxSize()
-        .background(MaterialTheme.colorScheme.background)
+    val uiState by homeViewModel.uiState.collectAsState()
+
+    LaunchedEffect(homeViewModel.navigationEvent) {
+        homeViewModel.navigationEvent.collectLatest {
+            when(it) {
+                is NavigationEvent.ToForum -> {
+                    it.movie.movie_id?.let { movieId ->
+                        navController.navigate("${Screen.Forum.route}/$movieId")
+                    }
+                }
+                is NavigationEvent.ToRecommendation -> {
+                    navController.navigate("${Screen.Recommendation.route}/${it.imdbId}")
+                }
+            }
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
     ) {
         var searchQuery by remember { mutableStateOf("") }
         SearchTextField(
             query = searchQuery,
             onQueryChange = {
                 searchQuery = it
-                onSearchQueryChanged(it)
+                homeViewModel.searchMovies(it)
             },
             onClear = {
                 searchQuery = ""
-                onClearSearchResults()
+                homeViewModel.clearSearchResults()
             },
             modifier = Modifier.padding(16.dp)
         )
-        when (uiState) {
+        when (val state = uiState) {
             is HomeUiState.Loading -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
             }
             is HomeUiState.Success -> {
-                if (searchQuery.isNotBlank() && uiState.searchResults.isNotEmpty()) {
-                    SearchList(uiState.searchResults, onSearchConfirmed)
+                if (searchQuery.isNotBlank() && state.searchResults.isNotEmpty()) {
+                    SearchList(state.searchResults, homeViewModel::onSearchConfirmed)
                 } else {
-                    MainContent(uiState, onMovieClicked, onMovieLongClicked)
+                    MainContent(
+                        uiState = state,
+                        onMovieClicked = {
+                            it.movie_id?.let { movieId ->
+                                navController.navigate("${Screen.Forum.route}/$movieId")
+                            }
+                        },
+                        onMovieLongClicked = {
+                            it.movie_id?.let { movieId ->
+                                navController.navigate("${Screen.Recommendation.route}/$movieId")
+                            }
+                        }
+                    )
                 }
             }
             is HomeUiState.Error -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(text = uiState.message)
+                    Text(text = state.message)
                 }
             }
         }
@@ -150,28 +182,96 @@ fun MainContent(
                 HorizontalPager(
                     state = pagerState,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp)
+                        .height(200.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    pageSpacing = 8.dp
                 ) { page ->
                     val movieIndex = (page - startIndex).mod(uiState.banners.size)
                     val movie = uiState.banners[movieIndex]
-                    Box(contentAlignment = Alignment.Center) {
-                        // Background image that fills the space, blurred
-                        GlideImage(
-                            model = movie.primary_image_url,
-                            contentDescription = null, // Decorative
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .blur(radius = 16.dp)
-                        )
-                        // Main image that fits inside
-                        GlideImage(
-                            model = movie.primary_image_url,
-                            contentDescription = movie.title,
-                            contentScale = ContentScale.Fit,
-                            modifier = Modifier.fillMaxSize()
-                        )
+
+                    val slantedEdgeShape = object : Shape {
+                        override fun createOutline(
+                            size: androidx.compose.ui.geometry.Size,
+                            layoutDirection: LayoutDirection,
+                            density: Density
+                        ): androidx.compose.ui.graphics.Outline {
+                            val path = Path().apply {
+                                moveTo(size.width, 0f)
+                                lineTo(size.width, size.height)
+                                lineTo(0f, size.height)
+                                lineTo(size.width * 0.3f, 0f)
+                                close()
+                            }
+                            return androidx.compose.ui.graphics.Outline.Generic(path)
+                        }
+                    }
+
+                    Card(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clickable { onMovieClicked(movie) },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxSize(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Left side: Text information
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(start = 16.dp, end = 8.dp, top = 16.dp, bottom = 16.dp),
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Text(
+                                    text = movie.getYearString() ?: "Releasing",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    text = movie.title ?: "No Title",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = movie.overview ?: "",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 3,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Spacer(modifier = Modifier.weight(1f))
+                                // Genres
+                                movie.genres?.let { genreString ->
+                                    LazyRow(
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        items(genreString.split(',').map { it.trim() }.take(3)) { genre ->
+                                            Text(
+                                                text = genre,
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = MaterialTheme.colorScheme.primary,
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Right side: Image
+                            GlideImage(
+                                model = movie.primary_image_url,
+                                contentDescription = movie.title,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .weight(0.8f)
+                                    .fillMaxHeight()
+                                    .clip(slantedEdgeShape)
+                            )
+                        }
                     }
                 }
             }
@@ -393,7 +493,7 @@ fun MovieCard(
                 },
                 failure = placeholder {
                     Box(
-                        Modifier
+                        modifier = Modifier
                             .fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {

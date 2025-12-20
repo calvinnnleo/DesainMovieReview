@@ -1,17 +1,32 @@
 package com.example.desainmoviereview2.forum
 
 import android.util.Base64
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Recommend
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -19,6 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -28,6 +44,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
@@ -36,65 +53,184 @@ import com.example.desainmoviereview2.R
 import java.text.SimpleDateFormat
 import java.util.*
 
+@Composable
+fun ForumScreen(forumViewModel: ForumViewModel = viewModel(), onMovieClicked: (MovieItem) -> Unit) {
+    val posts by forumViewModel.posts.collectAsState()
+    val movieItem by forumViewModel.movieItem.collectAsState()
+    val currentUserId by forumViewModel.currentUserId.collectAsState()
+
+    StatelessForumScreen(
+        movieItem = movieItem,
+        posts = posts,
+        currentUserId = currentUserId,
+        onReplySubmit = { post, replyContent -> forumViewModel.submitReplyToPost(post, replyContent) },
+        onPostUpdate = { post, content, rating -> forumViewModel.updatePost(post, content, rating) },
+        onPostDelete = { post -> forumViewModel.deletePost(post) },
+        onReplyUpdate = { post, reply, content -> forumViewModel.updateReply(post, reply, content) },
+        onReplyDelete = { post, reply -> forumViewModel.deleteReply(post, reply) },
+        onAddNewPost = { content, rating -> forumViewModel.submitNewPost(content, rating) },
+        onGoToRecommendation = { onMovieClicked(movieItem!!) }
+    )
+}
+
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-fun ForumScreen(
-    movieItem: MovieItem,
+fun StatelessForumScreen(
+    movieItem: MovieItem?,
     posts: List<ForumPost>,
     currentUserId: String?,
     onReplySubmit: (post: ForumPost, replyContent: String) -> Unit,
-    onPostEdit: (post: ForumPost) -> Unit,
+    onPostUpdate: (post: ForumPost, newContent: String, newRating: Int) -> Unit,
     onPostDelete: (post: ForumPost) -> Unit,
-    onReplyEdit: (post: ForumPost, reply: Reply) -> Unit,
+    onReplyUpdate: (post: ForumPost, reply: Reply, newContent: String) -> Unit,
     onReplyDelete: (post: ForumPost, reply: Reply) -> Unit,
-    onAddNewPost: (content: String, rating: Int) -> Unit
+    onAddNewPost: (content: String, rating: Int) -> Unit,
+    onGoToRecommendation: () -> Unit
 ) {
     var showAddPostDialog by remember { mutableStateOf(false) }
+    var postToEdit by remember { mutableStateOf<ForumPost?>(null) }
+    var replyToEdit by remember { mutableStateOf<Pair<ForumPost, Reply>?>(null) }
 
     Scaffold(
         floatingActionButton = {
             if (currentUserId != null) {
-                FloatingActionButton(onClick = { showAddPostDialog = true }) {
-                    Icon(Icons.Default.Add, contentDescription = "Add Post")
-                }
+                MultiFloatingActionButton(
+                    onAddPostClicked = { showAddPostDialog = true },
+                    onGoToRecommendationClicked = onGoToRecommendation
+                )
             }
         }
     ) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            item {
-                MovieHeader(movieItem = movieItem)
+        if (movieItem == null) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
             }
-            item {
-                Text(
-                    text = "Forum",
-                    style = MaterialTheme.typography.headlineSmall,
-                    modifier = Modifier.padding(16.dp)
-                )
-            }
-            items(posts) { post ->
-                ForumPostItem(
-                    post = post,
-                    currentUserId = currentUserId,
-                    onReplySubmit = onReplySubmit,
-                    onPostEdit = onPostEdit,
-                    onPostDelete = onPostDelete,
-                    onReplyEdit = onReplyEdit,
-                    onReplyDelete = onReplyDelete
-                )
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+            ) {
+                item {
+                    MovieHeader(movieItem = movieItem)
+                }
+                item {
+                    Text(
+                        text = "Forum",
+                        style = MaterialTheme.typography.headlineSmall,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+                items(posts) { post ->
+                    ForumPostItem(
+                        post = post,
+                        currentUserId = currentUserId,
+                        onReplySubmit = onReplySubmit,
+                        onPostEdit = { postToEdit = it },
+                        onPostDelete = onPostDelete,
+                        onReplyEdit = { p, r -> replyToEdit = Pair(p, r) },
+                        onReplyDelete = onReplyDelete
+                    )
+                }
             }
         }
 
         if (showAddPostDialog) {
             AddNewPostDialog(
                 onDismiss = { showAddPostDialog = false },
-                onSubmit = { content, rating ->
-                    onAddNewPost(content, rating)
+                onSubmit = {
+                    onAddNewPost(it.first, it.second)
                     showAddPostDialog = false
                 }
+            )
+        }
+
+        postToEdit?.let { post ->
+            EditPostDialog(
+                post = post,
+                onDismiss = { postToEdit = null },
+                onSubmit = { p, content, rating ->
+                    onPostUpdate(p, content, rating)
+                    postToEdit = null
+                }
+            )
+        }
+
+        replyToEdit?.let { (post, reply) ->
+            EditReplyDialog(
+                reply = reply,
+                onDismiss = { replyToEdit = null },
+                onSubmit = { r, content ->
+                    onReplyUpdate(post, r, content)
+                    replyToEdit = null
+                }
+            )
+        }
+    }
+}
+
+@Composable
+fun MultiFloatingActionButton(
+    onAddPostClicked: () -> Unit,
+    onGoToRecommendationClicked: () -> Unit
+) {
+    var isExpanded by remember { mutableStateOf(false) }
+    val rotation by animateFloatAsState(targetValue = if (isExpanded) 45f else 0f)
+
+    Column(
+        horizontalAlignment = Alignment.End,
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        AnimatedVisibility(visible = isExpanded) {
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text("Add Post", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                    SmallFloatingActionButton(
+                        onClick = {
+                            onAddPostClicked()
+                            isExpanded = false
+                        },
+                        shape = CircleShape,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer
+                    ) {
+                        Icon(Icons.Filled.Chat, contentDescription = "Add Post")
+                    }
+                }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text("Recommendations", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                    SmallFloatingActionButton(
+                        onClick = {
+                            onGoToRecommendationClicked()
+                            isExpanded = false
+                        },
+                        shape = CircleShape,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer
+                    ) {
+                        Icon(Icons.Filled.Recommend, contentDescription = "Go to Recommendations")
+                    }
+                }
+            }
+        }
+
+        FloatingActionButton(
+            onClick = { isExpanded = !isExpanded },
+            shape = CircleShape
+        ) {
+            Icon(
+                Icons.Filled.Add,
+                contentDescription = "Open FAB Menu",
+                modifier = Modifier.rotate(rotation)
             )
         }
     }
@@ -379,7 +515,7 @@ fun RatingIndicator(rating: Float, maxRating: Int = 5) {
 @Composable
 fun AddNewPostDialog(
     onDismiss: () -> Unit,
-    onSubmit: (content: String, rating: Int) -> Unit
+    onSubmit: (Pair<String, Int>) -> Unit
 ) {
     var content by remember { mutableStateOf("") }
     var rating by remember { mutableStateOf(0) }
@@ -414,8 +550,91 @@ fun AddNewPostDialog(
             }
         },
         confirmButton = {
-            Button(onClick = { onSubmit(content, rating) }) {
+            Button(onClick = { onSubmit(Pair(content, rating)) }) {
                 Text("Submit")
+            }
+        },
+        dismissButton = {
+            Button(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+@Composable
+fun EditPostDialog(
+    post: ForumPost,
+    onDismiss: () -> Unit,
+    onSubmit: (ForumPost, String, Int) -> Unit
+) {
+    var content by remember(post) { mutableStateOf(post.content ?: "") }
+    var rating by remember(post) { mutableStateOf(post.user_rating ?: 0) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Edit Post") },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = content,
+                    onValueChange = { content = it },
+                    label = { Text("Your post...") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    for (i in 1..5) {
+                        Icon(
+                            imageVector = Icons.Default.Star,
+                            contentDescription = "rating",
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clickable { rating = i },
+                            tint = if (i <= rating) Color.Yellow else Color.Gray
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(onClick = { onSubmit(post, content, rating) }) {
+                Text("Save")
+            }
+        },
+        dismissButton = {
+            Button(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+@Composable
+fun EditReplyDialog(
+    reply: Reply,
+    onDismiss: () -> Unit,
+    onSubmit: (Reply, String) -> Unit
+) {
+    var content by remember(reply) { mutableStateOf(reply.content ?: "") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Edit Reply") },
+        text = {
+            OutlinedTextField(
+                value = content,
+                onValueChange = { content = it },
+                label = { Text("Your reply...") },
+                modifier = Modifier.fillMaxWidth()
+            )
+        },
+        confirmButton = {
+            Button(onClick = { onSubmit(reply, content) }) {
+                Text("Save")
             }
         },
         dismissButton = {
@@ -471,59 +690,17 @@ val mockPosts = listOf(
 @Composable
 fun ForumScreenPreview() {
     MaterialTheme {
-        ForumScreen(
+        StatelessForumScreen(
             movieItem = mockMovieItem,
             posts = mockPosts,
             currentUserId = "user1",
             onReplySubmit = { _, _ -> },
-            onPostEdit = {},
+            onPostUpdate = { _, _, _ -> },
             onPostDelete = {},
-            onReplyEdit = { _, _ -> },
+            onReplyUpdate = { _, _, _ -> },
             onReplyDelete = { _, _ -> },
-            onAddNewPost = { _, _ -> }
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun ForumPostItemPreview() {
-    MaterialTheme {
-        ForumPostItem(
-            post = mockPosts.first(),
-            currentUserId = "user1",
-            onReplySubmit = { _, _ -> },
-            onPostEdit = {},
-            onPostDelete = {},
-            onReplyEdit = { _, _ -> },
-            onReplyDelete = { _, _ -> }
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun CommentItemPreview() {
-    MaterialTheme {
-        Box(modifier = Modifier.padding(16.dp)) {
-            CommentItem(
-                post = mockPosts.first(),
-                reply = mockReplies.values.first(),
-                currentUserId = "user2",
-                onReplyEdit = { _, _ -> },
-                onReplyDelete = { _, _ -> }
-            )
-        }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun AddNewPostDialogPreview() {
-    MaterialTheme {
-        AddNewPostDialog(
-            onDismiss = {},
-            onSubmit = { _, _ -> }
+            onAddNewPost = { _, _ -> },
+            onGoToRecommendation = {}
         )
     }
 }

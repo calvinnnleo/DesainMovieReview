@@ -31,6 +31,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,6 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
@@ -49,18 +51,18 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MovieListScreen(
-    uiState: MovieListUiState,
-    onGenreFilterChanged: (String) -> Unit,
-    onSortByChanged: (String) -> Unit,
-    onMovieClicked: (MovieItem) -> Unit
+    onMovieClicked: (MovieItem) -> Unit,
+    viewModel: MovieListViewModel = viewModel()
 ) {
+    val uiState by viewModel.uiState.collectAsState()
+
     Scaffold(
         topBar = {
             FilterBar(
                 currentGenre = uiState.currentGenreFilter,
                 genres = uiState.filterGenres,
-                onGenreSelected = onGenreFilterChanged,
-                onSortSelected = onSortByChanged
+                onGenreSelected = viewModel::setGenreFilter,
+                onSortSelected = viewModel::setSortBy
             )
         }
     ) { paddingValues ->
@@ -198,7 +200,7 @@ fun MovieListItem(movie: MovieItem, onClick: () -> Unit) {
                 
                 Column {
                     val ratingText = String.format(Locale.US, "%.1f", movie.rating ?: 0.0)
-                    val yearText = movie.year ?: "N/A"
+                    val yearText = movie.getYearString() ?: "N/A"
                     val runtimeText = movie.runtime_minutes?.toInt()?.let { "$it min" } ?: "N/A"
                     
                     Text(

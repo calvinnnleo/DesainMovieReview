@@ -77,7 +77,7 @@ dependencies {
     // Glide for image loading
     implementation(libs.glide)
     implementation(libs.glide.transformations)
-    implementation("com.github.bumptech.glide:compose:1.0.0-beta08")
+    implementation("com.github.bumptech.glide:compose:1.0.0-beta01")
 
     // Networking
     implementation("com.squareup.retrofit2:retrofit:2.9.0")

@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.desainmoviereview2.MovieItem
 import com.example.desainmoviereview2.network.ApiClient
 import com.example.desainmoviereview2.network.RecommendationRequest
 import com.google.firebase.database.*
@@ -26,7 +27,7 @@ class RecommendationViewModel(
 
     init {
         loadSearchedMovie()
-        loadRecommendations()
+        fetchRecommendations(imdbID)
     }
 
     private fun loadSearchedMovie() {
@@ -44,11 +45,12 @@ class RecommendationViewModel(
         })
     }
 
-    private fun loadRecommendations() {
+    fun fetchRecommendations(movieId: String?) {
+        val id = movieId ?: imdbID
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             try {
-                val request = RecommendationRequest(imdbID)
+                val request = RecommendationRequest(id)
                 val response = ApiClient.recommendationService.getRecommendations(request)
 
                 if (response.status == "ok") {
@@ -67,7 +69,7 @@ class RecommendationViewModel(
 
     private fun fetchMoviesByTitles(titles: List<String>) {
         val moviesRef = database.child("movies")
-        val recommendedMovies = mutableListOf<com.example.desainmoviereview2.MovieItem>()
+        val recommendedMovies = mutableListOf<MovieItem>()
 
         viewModelScope.launch {
             for (title in titles) {
@@ -94,17 +96,17 @@ class RecommendationViewModel(
         }
     }
 
-    private fun parseMovie(movieSnapshot: DataSnapshot): com.example.desainmoviereview2.MovieItem? {
-        val movieMap = movieSnapshot.getValue(object : com.google.firebase.database.GenericTypeIndicator<Map<String, Any?>>() {})
+    private fun parseMovie(movieSnapshot: DataSnapshot): MovieItem? {
+        val movieMap = movieSnapshot.getValue(object : GenericTypeIndicator<Map<String, Any?>>() {})
         return if (movieMap != null) {
             val rating = (movieMap["rating"] as? Number)?.toDouble()
             val numVotes = (movieMap["num_votes"] as? Number)?.toDouble()
             val runtimeMinutes = (movieMap["runtime_minutes"] as? Number)?.toDouble()
 
-            _root_ide_package_.com.example.desainmoviereview2.MovieItem(
+            MovieItem(
                 movie_id = movieSnapshot.key,
                 title = movieMap["title"] as? String,
-                year = movieMap["year"]?.toString(),
+                year = movieMap["year"],
                 rating = rating,
                 num_votes = numVotes,
                 runtime_minutes = runtimeMinutes,
@@ -123,7 +125,7 @@ class RecommendationViewModel(
 }
 
 data class RecommendationUiState(
-    val searchedMovie: com.example.desainmoviereview2.MovieItem? = null,
-    val recommendations: List<com.example.desainmoviereview2.MovieItem> = emptyList(),
+    val searchedMovie: MovieItem? = null,
+    val recommendations: List<MovieItem> = emptyList(),
     val isLoading: Boolean = true
 )

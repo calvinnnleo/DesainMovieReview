@@ -7,8 +7,10 @@ import com.example.desainmoviereview2.network.AddMovieRequest
 import com.example.desainmoviereview2.network.ApiClient
 import com.example.desainmoviereview2.network.TmdbMovie
 import com.google.firebase.database.*
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -22,8 +24,8 @@ class HomeViewModel : ViewModel() {
     private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
-    private val _navigationEvent = MutableStateFlow<NavigationEvent?>(null)
-    val navigationEvent: StateFlow<NavigationEvent?> = _navigationEvent.asStateFlow()
+    private val _navigationEvent = MutableSharedFlow<NavigationEvent>()
+    val navigationEvent = _navigationEvent.asSharedFlow()
 
     private var allMovies = mutableListOf<MovieItem>()
 
@@ -42,26 +44,14 @@ class HomeViewModel : ViewModel() {
                 allMovies = newMovies
 
                 val currentYear = Calendar.getInstance().get(Calendar.YEAR)
-                val moviesFromCurrentYear = newMovies.filter { it.year?.toIntOrNull() == currentYear }
+                val moviesFromCurrentYear = newMovies.filter { it.getYearString()?.toIntOrNull() == currentYear }
                 val recommendedMovies = moviesFromCurrentYear.sortedWith(
                     compareByDescending<MovieItem> { it.num_votes ?: 0.0 }.thenByDescending { it.rating ?: 0.0 }
                 )
 
-                val banners: List<MovieItem>
-                val movieList: List<MovieItem>
+                val banners = recommendedMovies.take(3)
+                val movieList = recommendedMovies.take(10)
 
-                if (recommendedMovies.isNotEmpty()) {
-                    // If we have movies, take them for the UI
-                    banners = recommendedMovies.take(3)
-                    movieList = recommendedMovies.take(10)
-                } else {
-                    // If there are no recommended movies for this year, create empty lists
-                    // This prevents a crash in the UI Layer (e.g., Accompanist Pager)
-                    banners = emptyList()
-                    movieList = emptyList()
-                }
-
-                // Top Rated Movies - sorted by num_votes and rating descending
                 val topRatedMovies = allMovies
                     .filter { (it.rating ?: 0.0) >= 7.0 }
                     .sortedWith(
@@ -69,7 +59,6 @@ class HomeViewModel : ViewModel() {
                     )
                     .take(10)
 
-                // Genre-specific movie lists
                 val comedyMovies = allMovies
                     .filter { it.genres?.contains("Comedy", ignoreCase = true) == true }
                     .sortedWith(
@@ -141,18 +130,30 @@ class HomeViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val moviesRef = database.child("movies")
-                val snapshot = moviesRef.orderByChild("title").equalTo(tmdbMovie.title).limitToFirst(1).get().await()
+                val snapshot = moviesRef.orderByChild("title").equalTo(tmdbMovie.title).get().await()
+
+                var foundMovie: MovieItem? = null
                 if (snapshot.exists()) {
-                    val movieSnapshot = snapshot.children.first()
-                    val movie = parseMovie(movieSnapshot)
-                    if (movie?.movie_id != null) {
-                        _navigationEvent.value = NavigationEvent.ToRecommendation(movie.movie_id!!)
+                    val searchResultYear = tmdbMovie.releaseDate?.split("-")?.firstOrNull()
+
+                    for (movieSnapshot in snapshot.children) {
+                        val movie = parseMovie(movieSnapshot)
+                        if (movie?.getYearString() == searchResultYear) {
+                            foundMovie = movie
+                            break
+                        }
                     }
+                }
+
+                if (foundMovie != null) {
+                    foundMovie.movie_id?.let {
+                        _navigationEvent.emit(NavigationEvent.ToRecommendation(it))
+                    } ?: addMovieFlow(tmdbMovie)
                 } else {
                     addMovieFlow(tmdbMovie)
                 }
             } catch (e: Exception) {
-                 _uiState.value = HomeUiState.Error("Failed to search for movie in DB.")
+                _uiState.value = HomeUiState.Error("Failed to process movie search.")
             }
         }
     }
@@ -171,7 +172,7 @@ class HomeViewModel : ViewModel() {
             val addMovieResponse = ApiClient.recommendationService.addMovie(addMovieRequest)
 
             if (addMovieResponse.status == "ok") {
-                _navigationEvent.value = NavigationEvent.ToRecommendation(imdbId)
+                _navigationEvent.emit(NavigationEvent.ToRecommendation(imdbId))
             } else {
                  _uiState.value = HomeUiState.Error("Error: ${addMovieResponse.message}")
             }
@@ -180,16 +181,12 @@ class HomeViewModel : ViewModel() {
             _uiState.value = HomeUiState.Error("An error occurred while adding the movie.")
         }
     }
-    
+
     fun clearSearchResults() {
         val currentState = _uiState.value
         if (currentState is HomeUiState.Success) {
             _uiState.value = currentState.copy(searchResults = emptyList())
         }
-    }
-
-    fun onNavigated() {
-        _navigationEvent.value = null
     }
 
     private fun parseMovie(movieSnapshot: DataSnapshot): MovieItem? {
@@ -201,7 +198,7 @@ class HomeViewModel : ViewModel() {
             MovieItem(
                 movie_id = movieSnapshot.key,
                 title = movieMap["title"] as? String,
-                year = movieMap["year"]?.toString(),
+                year = movieMap["year"],
                 rating = rating,
                 num_votes = numVotes,
                 runtime_minutes = runtimeMinutes,
@@ -235,5 +232,6 @@ sealed class HomeUiState {
 }
 
 sealed class NavigationEvent {
+    data class ToForum(val movie: MovieItem) : NavigationEvent()
     data class ToRecommendation(val imdbId: String) : NavigationEvent()
 }
